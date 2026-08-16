@@ -18,7 +18,7 @@ logger = logging.getLogger("stormwatch.sources.nws")
 
 _REQUEST_TIMEOUT_SECONDS = 10
 _BACKOFF_CAP_SECONDS = 900
-_REPO_URL = "https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant"
+_REPO_URL = "https://github.com/hngyhngyhobo/StormWatch-HomeAssistant"
 
 
 class NwsPoller:

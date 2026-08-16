@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant"
+Homepage = "https://github.com/hngyhngyhobo/StormWatch-HomeAssistant"
 
 [project.optional-dependencies]
 dev = [

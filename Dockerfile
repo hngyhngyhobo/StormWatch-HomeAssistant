@@ -5,7 +5,7 @@ COPY src ./src
 RUN pip install --no-cache-dir --prefix=/install .
 
 FROM python:3.12-slim
-LABEL org.opencontainers.image.source="https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant" \
+LABEL org.opencontainers.image.source="https://github.com/hngyhngyhobo/StormWatch-HomeAssistant" \
       org.opencontainers.image.description="Lightning proximity and NWS severe weather alerts for Home Assistant via MQTT" \
       org.opencontainers.image.licenses="GPL-3.0-or-later" \
       com.centurylinklabs.watchtower.enable="true"

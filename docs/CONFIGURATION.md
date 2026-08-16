@@ -128,7 +128,7 @@ will do and the cost math behind the defaults below.
 | `RAIN_OBS_POLL_SECONDS` | `900` | Seconds between observed-rainfall updates (`sensor.stormwatch_rain_last_24h` / `_rain_last_7d`) |
 | `DISCOVERY_PREFIX` | `homeassistant` | |
 | `DEVICE_NAME` | `StormWatch` | Change if running multiple instances |
-| `STRIKE_MAP_WINDOW_MINUTES` | `30` | Minutes of strike history retained for `sensor.stormwatch_strikes`'s `geojson` attribute (the lightning strike map — see [HOME-ASSISTANT.md](HOME-ASSISTANT.md#lightning-strike-map)). Floored at 1. |
+| `STRIKE_MAP_WINDOW_MINUTES` | `30` | Minutes of strike history retained for `sensor.stormwatch_lightning_strikes`'s `geojson` attribute (the lightning strike map — see [HOME-ASSISTANT.md](HOME-ASSISTANT.md#lightning-strike-map)). Floored at 1. |
 
 **Multi-location:** run a second container with a different `DEVICE_NAME` and coordinates rather
 than trying to make one instance cover two places — cleaner, and Unraid makes running a second

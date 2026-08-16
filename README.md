@@ -56,7 +56,8 @@ Published via MQTT discovery under a single device, `StormWatch`:
 - **Alerts** — active alert count, highest-priority alert, critical-alert flag.
 - **Lightning & pool** — swim status (`CLEAR`/`WATCH`/`CLOSED`), nearest-strike distance/bearing,
   15-minute strike count, all-clear countdown, and a strikes map (GeoJSON).
-- **Rain** — forecast (today/48h) and observed (24h/7d) rainfall totals.
+- **Rain & watering** — forecast (today/48h) and observed (24h/7d) rainfall totals, plus a
+  weekly-aware `watering_needed` flag you can drive irrigation automations from.
 - **Diagnostics** — connection status, plus per-source availability (NWS, lightning, rain).
 
 Full entity table with every attribute: **[docs/HOME-ASSISTANT.md](docs/HOME-ASSISTANT.md)**.

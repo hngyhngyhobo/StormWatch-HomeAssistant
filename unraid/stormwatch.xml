@@ -6,11 +6,11 @@
   <Network>bridge</Network>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
-  <Support>https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant/issues</Support>
-  <Project>https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant</Project>
+  <Support>https://github.com/hngyhngyhobo/StormWatch-HomeAssistant/issues</Support>
+  <Project>https://github.com/hngyhngyhobo/StormWatch-HomeAssistant</Project>
   <Overview>Lightning proximity and NWS severe weather alerts as Home Assistant entities via MQTT auto-discovery. Free data sources by default; no accounts, no API keys. NOT a life-safety system.</Overview>
   <Category>HomeAutomation Tools:</Category>
-  <Icon>https://raw.githubusercontent.com/hngyhngyhobo/WeatherAlert-HomeAssistant/main/unraid/icon.png</Icon>
+  <Icon>https://raw.githubusercontent.com/hngyhngyhobo/StormWatch-HomeAssistant/main/unraid/icon.png</Icon>
   <ExtraParams/>
   <WebUI>http://[IP]:[PORT:8099]/healthz</WebUI>
   <Config Name="MQTT Host" Target="MQTT_HOST" Default="" Mode="" Description="Your Mosquitto broker. Required." Type="Variable" Display="always" Required="true" Mask="false"/>
@@ -46,7 +46,7 @@
   <Config Name="Rain Obs Poll Seconds" Target="RAIN_OBS_POLL_SECONDS" Default="900" Mode="" Description="Rainfall feature — arriving in this build. Seconds between observation updates." Type="Variable" Display="advanced" Required="false" Mask="false"/>
   <Config Name="Discovery Prefix" Target="DISCOVERY_PREFIX" Default="homeassistant" Mode="" Description="Home Assistant MQTT discovery prefix." Type="Variable" Display="advanced" Required="false" Mask="false"/>
   <Config Name="Device Name" Target="DEVICE_NAME" Default="StormWatch" Mode="" Description="Change if running multiple instances." Type="Variable" Display="advanced" Required="false" Mask="false"/>
-  <Config Name="Strike Map Window Minutes" Target="STRIKE_MAP_WINDOW_MINUTES" Default="30" Mode="" Description="Minutes of strike history retained for the lightning strike map (sensor.stormwatch_strikes geojson attribute). Floored at 1." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Strike Map Window Minutes" Target="STRIKE_MAP_WINDOW_MINUTES" Default="30" Mode="" Description="Minutes of strike history retained for the lightning strike map (sensor.stormwatch_lightning_strikes geojson attribute). Floored at 1." Type="Variable" Display="advanced" Required="false" Mask="false"/>
   <Config Name="Healthz Port" Target="8099" Default="8099" Mode="tcp" Description="Optional. JSON status endpoint at /healthz: source connectivity, current state, quota usage, config validity." Type="Port" Display="always" Required="false" Mask="false"/>
   <Config Name="Config" Target="/config" Default="/mnt/user/appdata/stormwatch" Mode="rw" Description="Persistent storage for StormWatch state and configuration." Type="Path" Display="always" Required="false" Mask="false"/>
 </Container>

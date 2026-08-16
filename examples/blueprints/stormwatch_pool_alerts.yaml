@@ -12,7 +12,7 @@ blueprint:
     - All clear (stormwatch/event/all_clear): always a normal, silent
       push — not configurable. An all-clear should never wake anyone up.
   domain: automation
-  source_url: https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant/blob/main/examples/blueprints/stormwatch_pool_alerts.yaml
+  source_url: https://github.com/hngyhngyhobo/StormWatch-HomeAssistant/blob/main/examples/blueprints/stormwatch_pool_alerts.yaml
   input:
     notify_device:
       name: Notify Device

@@ -48,7 +48,7 @@ DEFAULT_COORDS: tuple[float, float] = (33.749, -84.388)
 
 _GEOCODE_URL = "https://geocoding-api.open-meteo.com/v1/search"
 _REQUEST_TIMEOUT_SECONDS = 10
-_REPO_URL = "https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant"
+_REPO_URL = "https://github.com/hngyhngyhobo/StormWatch-HomeAssistant"
 
 
 def _normalize(location: str) -> str:

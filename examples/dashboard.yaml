@@ -68,20 +68,72 @@ cards:
   # Lightning strike map -- requires the community nathan-gs/ha-map-card
   # (custom:map-card); see docs/HOME-ASSISTANT.md#lightning-strike-map and
   # examples/lightning-map-card.yaml for install instructions and a
-  # standalone copy of this card.
+  # standalone copy of this card. The `wms:` block overlays live NWS rain
+  # radar (free, no key) -- delete it for lightning only.
   - type: custom:map-card
     x: 33.7490        # example only (Atlanta, GA) — REQUIRED: set to your home latitude
     y: -84.3880       # example only — REQUIRED: set to your home longitude
-    zoom: 10
+    zoom: 9
     card_size: 8
+    wms:
+      - url: https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0q.cgi
+        options:
+          layers: nexrad-n0q-900913
+          format: image/png
+          transparent: true
     entities:
-      - entity: sensor.stormwatch_strikes
+      - entity: sensor.stormwatch_lightning_strikes
         geojson:
           attribute: geojson
-          color: '#ffcc00'
+          color: '#ffee00'
+          weight: 2
+          fill_opacity: 0.9
+          hide_marker: true   # required: the strikes sensor has no location of its own
       - entity: zone.home
-        display: marker
-        label: Home
-        circle: { source: config, radius: 16093, color: '#ff3333', fill_opacity: 0.05 }   # 10 mi no-swim ring
+        circle: { source: config, radius: 16093, color: '#ff3333', fill_opacity: 0.02 }   # 10 mi
       - entity: zone.home
-        circle: { source: config, radius: 40233, color: '#ffaa33', fill_opacity: 0.03 }   # 25 mi watch ring
+        circle: { source: config, radius: 32187, color: '#ff9933', fill_opacity: 0.02 }   # 20 mi
+      - entity: zone.home
+        circle: { source: config, radius: 48280, color: '#ffdd33', fill_opacity: 0.02 }   # 30 mi
+
+  # Watering verdict -- a readable Water / Skip summary. It mirrors the
+  # weekly-aware logic of binary_sensor.stormwatch_watering_needed (the
+  # actionable flag below): dry 24h + dry 48h forecast + a dry-enough week.
+  # NWS rainfall is US-only; metric users: swap "in" and the thresholds.
+  - type: markdown
+    title: Watering
+    content: |
+      {% set w24 = states('sensor.stormwatch_rain_last_24h') | float(0) -%}
+      {% set f48 = states('sensor.stormwatch_rain_forecast_48h') | float(0) -%}
+      {% set ft = states('sensor.stormwatch_rain_forecast_today') | float(0) -%}
+      {% set d7 = states('sensor.stormwatch_rain_last_7d') | float(0) -%}
+      {% if w24 >= 0.1 -%}
+      ## Skip watering
+      It rained **{{ w24 }} in** in the last 24 hours.
+      {% elif f48 >= 0.1 -%}
+      ## Skip watering
+      **{{ f48 }} in** of rain is forecast in the next 48 hours.
+      {% elif d7 >= 0.5 -%}
+      ## Skip watering
+      **{{ d7 }} in** already fell this week.
+      {% else -%}
+      ## Water today
+      Dry across the last 24h, the next 48h, and the past week.
+      {% endif %}
+      Forecast today **{{ ft }} in** · next 48h **{{ f48 }} in** · observed 24h **{{ w24 }} in** · 7-day **{{ d7 }} in**
+
+  - type: entities
+    title: Rain & Watering
+    entities:
+      # The actionable flag -- build automations on this (on = water today).
+      - entity: binary_sensor.stormwatch_watering_needed
+        name: Watering Needed
+      - type: divider
+      - entity: sensor.stormwatch_rain_forecast_today
+        name: Forecast Today
+      - entity: sensor.stormwatch_rain_forecast_48h
+        name: Forecast (48h)
+      - entity: sensor.stormwatch_rain_last_24h
+        name: Observed (24h)
+      - entity: sensor.stormwatch_rain_last_7d
+        name: Observed (7d)
