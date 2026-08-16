@@ -10,8 +10,8 @@
 # The two rings are zone.home circle overlays at CLOSE_RADIUS/WATCH_RADIUS.
 
 type: custom:map-card
-x: 34.0241        # home latitude — set to yours
-y: -84.6096       # home longitude — set to yours
+x: 33.7490        # example only (Atlanta, GA) — REQUIRED: set to your home latitude
+y: -84.3880       # example only — REQUIRED: set to your home longitude
 zoom: 10
 card_size: 8
 entities:
