@@ -1,12 +1,10 @@
 # StormWatch
 
 StormWatch is a single self-hosted container that turns National Weather Service severe-weather
-alerts into clean Home Assistant entities and critical push notifications, so a tornado warning at
-3 a.m. actually wakes you up instead of arriving as a silent, Do-Not-Disturb-respecting
-notification. It's also built around the question every pool owner asks all summer: "do we need to
-get out of the water, and can we get back in?" — lightning proximity with a real all-clear timer,
-via the free community Blitzortung lightning network. Free by default, no accounts, no cloud
-service deciding anything for you.
+alerts and Blitzortung community lightning data into clean Home Assistant entities — plus a real
+pool all-clear timer and rainfall tracking — over MQTT auto-discovery. Free by default, no
+accounts, no cloud service deciding anything for you. A tornado warning at 3 a.m. should actually
+wake you up, not arrive as a silent, Do-Not-Disturb-respecting notification.
 
 <!-- screenshot: HA dashboard card — added at go-live -->
 
@@ -22,103 +20,79 @@ service deciding anything for you.
 
 ## What it does
 
-- **NWS watches and warnings become Home Assistant entities and critical iOS alerts.** Floods,
-  winter storms, freeze/frost, hurricanes, tornadoes — essentially everything NWS issues is
-  reported by default; priority (and what actually becomes a notification) is curated Home
-  Assistant-side, so the alert that matters actually reaches you.
-- **Lightning proximity with a real all-clear timer** for the "can we get back in the pool"
-  question — swim status, nearest-strike distance/bearing, strike count, and a countdown to
-  all-clear, driven by the free community Blitzortung lightning network. The timer resets on every
-  qualifying strike and the all-clear is its own event, never a loud one.
-- **Rainfall forecast and observed accumulation for watering decisions** — today's and next-48h
-  forecast rainfall, plus rolling 24h/7d observed totals with an hourly breakdown, straight from
-  free NWS gridpoint/station data (US locations only, no API key).
-- **Free by default, no accounts.** No API key or signup is required for anything StormWatch does
-  out of the box.
+- **NWS watches and warnings → Home Assistant entities and critical iOS alerts.** Nearly everything
+  NWS issues is reported by default; what actually notifies you is curated Home Assistant-side.
+- **Lightning proximity with a real all-clear timer** — swim status, nearest-strike distance/bearing,
+  strike count, and a countdown to all-clear, from the free community Blitzortung network.
+- **Rainfall forecast and observed totals** for watering decisions — today/48h forecast plus
+  rolling 24h/7d observed, from free NWS data (US locations only, no API key).
+- **Free by default, no accounts.** No API key or signup required for anything out of the box.
 - **One container, MQTT auto-discovery.** Entities appear in Home Assistant the moment the
   container starts — no `configuration.yaml` editing, no custom integration.
 
-## Quickstart (Unraid, ~5 minutes)
+## Install
 
-1. Make sure Mosquitto (or any MQTT broker) is already running and connected to Home Assistant —
-   StormWatch publishes to it but doesn't provide one itself.
-2. In Unraid, go to **Docker → Add Container** and add StormWatch from the Community Applications
-   template (or paste the template URL — see [docs/INSTALL-UNRAID.md](docs/INSTALL-UNRAID.md)).
-3. Fill in the two required fields: `MQTT_HOST`, `NWS_CONTACT`. Location defaults to Atlanta, GA
-   — set `LOCATION="Your City, ST"` or exact `LATITUDE`/`LONGITUDE` coordinates for your own area.
-4. Start the container. A **StormWatch** device with its entities appears in Home Assistant
-   automatically — no restart or manual configuration needed.
-5. Import the shipped
-   [severe alerts blueprint](examples/blueprints/stormwatch_severe_alerts.yaml) to route alerts to
-   notifications, including the critical iOS alert payload, and the
-   [pool alerts blueprint](examples/blueprints/stormwatch_pool_alerts.yaml) to get notified when
-   the pool closes for lightning and when it's safe to get back in. Want a Tornado Warning to
-   physically wake you? Import the
-   [tornado strobe blueprint](examples/blueprints/stormwatch_tornado_strobe.yaml) to flash a
-   bedside lamp — no device firmware changes needed.
+Quickest path — Unraid:
 
-Full walkthrough, screenshots, and field-by-field explanations:
-[docs/INSTALL-UNRAID.md](docs/INSTALL-UNRAID.md).
+1. Have an MQTT broker (Mosquitto) running and connected to Home Assistant — StormWatch publishes
+   to it, it doesn't provide one.
+2. Unraid → **Docker → Add Container** → the **StormWatch** Community Applications template (or
+   paste the template URL — see [docs/INSTALL-UNRAID.md](docs/INSTALL-UNRAID.md)).
+3. Set the two required fields — `MQTT_HOST` and `NWS_CONTACT` — and your location
+   (`LOCATION="Your City, ST"` or exact `LATITUDE`/`LONGITUDE`).
+4. **Apply.** The **StormWatch** device and its entities appear in Home Assistant automatically
+   (MQTT discovery — no `configuration.yaml` edits).
+5. Import a blueprint from [examples/blueprints/](examples/blueprints/) to turn alerts into
+   notifications: [severe alerts](examples/blueprints/stormwatch_severe_alerts.yaml),
+   [pool alerts](examples/blueprints/stormwatch_pool_alerts.yaml),
+   [tornado strobe](examples/blueprints/stormwatch_tornado_strobe.yaml).
+
+Full step-by-step guides: **[Unraid](docs/INSTALL-UNRAID.md)** · **[Docker / Compose](docs/INSTALL-DOCKER.md)**.
 
 ## Entities
 
-Published via MQTT discovery under a single device, `StormWatch`.
+Published via MQTT discovery under a single device, `StormWatch`:
 
-| Entity | Type | Notes |
-|---|---|---|
-| `sensor.stormwatch_active_alerts` | count | Count of all active NWS alerts for the location; full alert list in attributes |
-| `sensor.stormwatch_highest_alert` | string | Highest-priority active alert (rule-matched) headline; description in attributes |
-| `binary_sensor.stormwatch_critical_alert` | binary (`safety`) | On when any rule-matched active alert is `critical` priority |
-| `binary_sensor.stormwatch_config_problem` | binary (`problem`, diagnostic) | ON when the alert-rules config has a problem (previous good rules stay active; error text in attributes); OFF when valid. |
-| `binary_sensor.stormwatch_nws_available` | binary (`connectivity`, diagnostic) | On when NWS data source is reachable |
-| `binary_sensor.stormwatch_connected` | binary (`connectivity`) | LWT-backed availability — off if the container loses its connection |
-| `sensor.stormwatch_swim_status` | enum | `CLEAR` / `WATCH` / `CLOSED` — the headline pool/lightning entity |
-| `sensor.stormwatch_nearest_strike_distance` | distance | Nearest recent strike, in `mi` or `km` per `UNITS` |
-| `sensor.stormwatch_nearest_strike_bearing` | string | Compass direction (e.g. `SW`) of the nearest recent strike; exact degrees in attributes |
-| `sensor.stormwatch_strike_count_15m` | count | Strikes in the trailing 15 minutes — a storm-intensity proxy |
-| `sensor.stormwatch_all_clear_at` | timestamp | When the all-clear timer expires; renders as a countdown in HA. Reports `None` while `CLEAR`. |
-| `binary_sensor.stormwatch_lightning_nearby` | binary (`safety`) | On when swim status is `CLOSED` |
-| `binary_sensor.stormwatch_lightning_available` | binary (`connectivity`, diagnostic) | On when the Blitzortung lightning feed is connected |
-| `sensor.stormwatch_rain_forecast_today` | rain amount (`in`/`mm`) | Forecast rainfall for the rest of the UTC calendar day, from the NWS gridpoint QPF layer |
-| `sensor.stormwatch_rain_forecast_48h` | rain amount (`in`/`mm`) | Forecast rainfall over the next 48 hours (rolling from now) |
-| `sensor.stormwatch_rain_last_24h` | rain amount (`in`/`mm`) | Observed rainfall in the trailing 24 hours; hourly breakdown in attributes |
-| `sensor.stormwatch_rain_last_7d` | rain amount (`in`/`mm`) | Observed rainfall in the trailing 7 days |
-| `binary_sensor.stormwatch_rain_available` | binary (`connectivity`, diagnostic) | On when the NWS rainfall data source is reachable |
-| `sensor.stormwatch_strikes` | count | Count of recent lightning strikes (last `STRIKE_MAP_WINDOW_MINUTES`); a GeoJSON `FeatureCollection` of strike points (distance/bearing/age/range per point) is in the `geojson` attribute, for rendering on a map card — see [docs/HOME-ASSISTANT.md](docs/HOME-ASSISTANT.md#lightning-strike-map) |
+- **Alerts** — active alert count, highest-priority alert, critical-alert flag.
+- **Lightning & pool** — swim status (`CLEAR`/`WATCH`/`CLOSED`), nearest-strike distance/bearing,
+  15-minute strike count, all-clear countdown, and a strikes map (GeoJSON).
+- **Rain** — forecast (today/48h) and observed (24h/7d) rainfall totals.
+- **Diagnostics** — connection status, plus per-source availability (NWS, lightning, rain).
 
-The lightning/pool entities (rows 7-13, plus `sensor.stormwatch_strikes`) only appear when `BLITZORTUNG_ENABLED` is true (the
-default), and the rainfall entities (last five rows) only appear when `RAIN_ENABLED` is true (also
-the default, US locations only) — see [docs/CONFIGURATION.md](docs/CONFIGURATION.md#advanced).
+Full entity table with every attribute: **[docs/HOME-ASSISTANT.md](docs/HOME-ASSISTANT.md)**.
 
 ## Configuration
 
-All settings are environment variables — Unraid template fields map 1:1. These two are required;
-everything else has a working default.
+All settings are environment variables — Unraid template fields map 1:1. Two are required:
 
 | Variable | Example | Notes |
 |---|---|---|
 | `MQTT_HOST` | `192.168.1.10` | Your Mosquitto broker |
 | `NWS_CONTACT` | `you@example.com` | Sent in the User-Agent header, per NWS policy |
 
-Location defaults to `LOCATION=Atlanta, GA` if you don't set anything — the container starts and
-runs fine, it just logs a warning and watches the wrong city. For your own area, set either:
+Set your location with either `LOCATION="Your City, ST"` (geocoded once and cached) or exact
+`LATITUDE`/`LONGITUDE` (e.g. `34.0234` / `-84.6155`) — coordinates are recommended for the
+lightning-proximity feature, since a city geocode lands on the city center, not your address.
 
-| Variable | Example | Notes |
-|---|---|---|
-| `LOCATION` | `Asheville, NC` | City name, geocoded once (via the free Open-Meteo API) and cached to `/config/location.json` |
-| `LATITUDE` / `LONGITUDE` | `34.0234` / `-84.6155` | Decimal degrees — **recommended over `LOCATION`** for the lightning-proximity feature, since a city geocode lands on the city center, not your exact address |
+Full reference (every variable, alert rules, Xweather): **[docs/CONFIGURATION.md](docs/CONFIGURATION.md)**.
+Customizing which alerts notify you: **[docs/ALERT-RULES.md](docs/ALERT-RULES.md)**.
 
-Full reference for every variable (location resolution details, polling intervals, alert rule env
-vars, optional Xweather tier, advanced settings): [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
+## Documentation
+
+- **[docs/INSTALL-UNRAID.md](docs/INSTALL-UNRAID.md)** — Unraid install walkthrough
+- **[docs/INSTALL-DOCKER.md](docs/INSTALL-DOCKER.md)** — Docker / Compose install
+- **[docs/CONFIGURATION.md](docs/CONFIGURATION.md)** — every setting, explained
+- **[docs/HOME-ASSISTANT.md](docs/HOME-ASSISTANT.md)** — entities, blueprints, lightning strike map
+- **[docs/ALERT-RULES.md](docs/ALERT-RULES.md)** — customizing which alerts notify you
+- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** — fixing common problems
 
 ## Updating
 
-Docs recommend pinning the major version tag, e.g. `ghcr.io/hngyhngyhobo/stormwatch:1`, rather than
-`:latest` or a full version — you get bug fixes and non-breaking improvements automatically without
-surprise major upgrades. On Unraid, the Docker tab shows "update ready" on its own once a new image
-is published under your pinned tag; no manual digest checking required.
-
-See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
+While StormWatch is pre-1.0, pin the minor tag — `ghcr.io/hngyhngyhobo/stormwatch:0.2` — not
+`:latest` or a full patch version: 0.x minor releases can still contain breaking changes. Unraid's
+Docker tab shows "update ready" on its own once a new image lands under your pinned tag; the
+Community Applications **Auto Update Applications** plugin can apply those automatically if you
+want it hands-off. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
 
 ## Attribution & data sources
 
