@@ -1,0 +1,42 @@
+# ── Claude / AI working files (local only, backed up via Nextcloud) ──
+.claude/
+.superpowers/
+CLAUDE.md
+CLAUDE.local.md
+docs/superpowers/
+docs/session-handoff.md
+
+# ── Secrets & local config ──
+.env
+.env.*
+!.env.example
+
+# ── Runtime data (the /config mount) ──
+config/
+*.bak-*
+quota.json
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.python-version
+
+# ── Tooling caches ──
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ── IDE / OS ──
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stormwatch"
+version = "0.1.0"
+description = "Lightning proximity and NWS severe weather alerts for Home Assistant via MQTT"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "hngyhngyhobo" }]
+dependencies = [
+    "paho-mqtt>=2.0",
+    "requests>=2.31",
+    "PyYAML>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant"
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4",
+    "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: requires a live MQTT broker"]
+addopts = "-m 'not integration'"

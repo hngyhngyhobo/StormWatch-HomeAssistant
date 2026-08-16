@@ -1,0 +1,10 @@
+services:
+  stormwatch:
+    image: ghcr.io/hngyhngyhobo/stormwatch:latest
+    container_name: stormwatch
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8099:8099"
+    volumes:
+      - ./config:/config

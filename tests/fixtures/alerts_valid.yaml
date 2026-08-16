@@ -1,0 +1,29 @@
+version: 1
+
+defaults:
+  priority: ignore
+  min_severity: Moderate
+
+rules:
+  - name: Tornado Warning
+    match:
+      event: ["Tornado Warning"]
+    priority: critical
+
+  - name: Severe Thunderstorm Warning
+    match:
+      event: ["Severe Thunderstorm Warning"]
+      urgency: ["Immediate", "Expected"]
+    priority: high
+
+  - name: Watches
+    match:
+      event_regex: ".*Watch$"
+    priority: normal
+    quiet_hours: true
+
+  - name: Winter weather
+    match:
+      event: ["Winter Storm Warning", "Ice Storm Warning", "Blizzard Warning"]
+    priority: high
+    enabled: false

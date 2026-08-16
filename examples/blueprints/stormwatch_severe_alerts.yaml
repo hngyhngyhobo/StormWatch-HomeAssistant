@@ -1,0 +1,112 @@
+blueprint:
+  name: StormWatch — Severe Weather Alerts
+  description: >-
+    Notifies a phone when StormWatch publishes an NWS alert on
+    stormwatch/event/alert_issued, routed by priority per the
+    StormWatch notification discipline (see DESIGN.md §8):
+
+    - critical (tornado warnings, lightning inside CLOSE_RADIUS): the iOS
+      critical-alert push, which can sound even through Do Not Disturb.
+    - high (severe thunderstorm warnings): a normal push with an audible,
+      distinct sound. Does not bypass Do Not Disturb.
+    - normal (watches, all-clears): silent, no sound, no DND bypass. An
+      all-clear should never wake anyone up.
+  domain: automation
+  source_url: https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant/blob/main/examples/blueprints/stormwatch_severe_alerts.yaml
+  input:
+    notify_device:
+      name: Notify Device
+      description: The mobile_app device to notify.
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+    critical_enabled:
+      name: Enable Critical Alerts
+      description: >-
+        When on, critical-priority alerts (e.g. Tornado Warning) use the
+        iOS critical-alert push. When off, critical alerts fall back to a
+        normal (non-DND-bypassing) push instead.
+      default: true
+      selector:
+        boolean: {}
+
+mode: queued
+max: 10
+
+trigger:
+  - platform: mqtt
+    topic: stormwatch/event/alert_issued
+
+variables:
+  headline: "{{ trigger.payload_json.headline }}"
+  priority: "{{ trigger.payload_json.priority }}"
+  description: "{{ trigger.payload_json.description }}"
+  critical_enabled: !input critical_enabled
+
+action:
+  - choose:
+      # critical: tornado warnings, lightning inside CLOSE_RADIUS. Rare
+      # enough that it never gets ignored.
+      - conditions:
+          - condition: template
+            value_template: "{{ priority == 'critical' }}"
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ critical_enabled }}"
+                sequence:
+                  - device_id: !input notify_device
+                    domain: mobile_app
+                    type: notify
+                    title: "{{ headline }}"
+                    message: "{{ description }}"
+                    data:
+                      push:
+                        sound:
+                          name: "default"
+                          critical: 1
+                          volume: 1.0
+            default:
+              # critical_enabled toggled off — send a normal push instead
+              # of the DND-bypassing critical-alert payload.
+              - device_id: !input notify_device
+                domain: mobile_app
+                type: notify
+                title: "{{ headline }}"
+                message: "{{ description }}"
+                data:
+                  push:
+                    sound: "default"
+
+      # high: severe thunderstorm warnings. Normal push, distinct sound —
+      # audible, but never bypasses Do Not Disturb.
+      - conditions:
+          - condition: template
+            value_template: "{{ priority == 'high' }}"
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ headline }}"
+            message: "{{ description }}"
+            data:
+              push:
+                sound: "default"
+
+      # normal: watches, all-clears. Silent — no sound, no DND bypass.
+      # An all-clear should never wake anyone up.
+      - conditions:
+          - condition: template
+            value_template: "{{ priority == 'normal' }}"
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "{{ headline }}"
+            message: "{{ description }}"
+            data:
+              push:
+                sound: null
+    default: []

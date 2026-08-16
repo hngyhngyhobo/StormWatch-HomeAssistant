@@ -1,0 +1,66 @@
+# StormWatch dashboard card
+#
+# Add this to a Lovelace view in YAML mode, or paste it into the raw
+# card editor of a manually-configured dashboard.
+#
+# Includes the lightning/pool row group (swim status, nearest-strike
+# distance/bearing, strike count, all-clear countdown) — see DESIGN.md §8
+# for the full entity map. These only populate once BLITZORTUNG_ENABLED is
+# true (the default) — see docs/HOME-ASSISTANT.md.
+
+type: vertical-stack
+cards:
+  - type: entities
+    title: StormWatch
+    entities:
+      - entity: sensor.stormwatch_highest_alert
+        name: Highest Active Alert
+      - entity: sensor.stormwatch_active_alerts
+        name: Active Alerts
+      - entity: binary_sensor.stormwatch_connected
+        name: StormWatch Connected
+
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.stormwatch_critical_alert
+        state: "on"
+    card:
+      type: entities
+      title: CRITICAL ALERT ACTIVE
+      state_color: true
+      entities:
+        - entity: binary_sensor.stormwatch_critical_alert
+          name: Critical Alert
+        - entity: sensor.stormwatch_highest_alert
+          name: Alert Details
+
+  - type: entities
+    title: Pool / Lightning
+    state_color: true
+    entities:
+      - entity: sensor.stormwatch_swim_status
+        name: Swim Status
+      - entity: sensor.stormwatch_nearest_strike_distance
+        name: Nearest Strike Distance
+      - entity: sensor.stormwatch_nearest_strike_bearing
+        name: Nearest Strike Bearing
+      - entity: sensor.stormwatch_strike_count_15m
+        name: Strikes (15 min)
+      - entity: sensor.stormwatch_all_clear_at
+        name: All Clear At
+
+  - type: conditional
+    conditions:
+      - entity: binary_sensor.stormwatch_lightning_nearby
+        state: "on"
+    card:
+      type: entities
+      title: POOL CLOSED — LIGHTNING NEARBY
+      state_color: true
+      entities:
+        - entity: binary_sensor.stormwatch_lightning_nearby
+          name: Lightning Nearby
+        - entity: sensor.stormwatch_nearest_strike_distance
+          name: Nearest Strike Distance
+        - entity: sensor.stormwatch_all_clear_at
+          name: All Clear At

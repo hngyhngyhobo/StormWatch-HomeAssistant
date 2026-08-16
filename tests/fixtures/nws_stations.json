@@ -1,0 +1,18 @@
+{
+  "features": [
+    {
+      "id": "https://api.weather.gov/stations/KKFFC2",
+      "properties": {
+        "stationIdentifier": "KKFFC2",
+        "name": "Peachtree City Falcon Field (no precip sensor)"
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC",
+      "properties": {
+        "stationIdentifier": "KFFC",
+        "name": "Peachtree City Falcon Field"
+      }
+    }
+  ]
+}

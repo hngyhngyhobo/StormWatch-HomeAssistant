@@ -1,0 +1,17 @@
+{
+  "properties": {
+    "gridId": "FFC",
+    "gridX": 60,
+    "gridY": 66,
+    "forecast": "https://api.weather.gov/gridpoints/FFC/60,66/forecast",
+    "forecastHourly": "https://api.weather.gov/gridpoints/FFC/60,66/forecast/hourly",
+    "forecastGridData": "https://api.weather.gov/gridpoints/FFC/60,66",
+    "observationStations": "https://api.weather.gov/gridpoints/FFC/60,66/stations",
+    "relativeLocation": {
+      "properties": {
+        "city": "Peachtree City",
+        "state": "GA"
+      }
+    }
+  }
+}

@@ -1,0 +1,130 @@
+# StormWatch — plain-YAML automations (no blueprint required)
+#
+# Equivalent to examples/blueprints/stormwatch_severe_alerts.yaml and
+# examples/blueprints/stormwatch_pool_alerts.yaml, for anyone who'd rather
+# edit YAML directly than import a blueprint. Routes NWS alerts
+# (stormwatch/event/alert_issued) and pool/lightning events
+# (stormwatch/event/lightning_close, stormwatch/event/all_clear) per the
+# StormWatch notification discipline (DESIGN.md §6, §8).
+#
+# >>> BEFORE USE <<<
+# Replace every `notify.mobile_app_REPLACE_ME` service call below with your
+# own mobile_app notify service (e.g. `notify.mobile_app_pixel_8`). Find
+# yours under Settings > Devices & Services > Mobile App, or search
+# Developer Tools > Actions for services starting with `notify.mobile_app_`.
+#
+# Merge this into configuration.yaml, e.g.:
+#   automation stormwatch: !include examples/automations.yaml
+# or copy the entries below into your existing automations.yaml.
+
+- id: stormwatch_severe_alerts
+  alias: StormWatch - Severe Weather Alerts
+  description: >-
+    Routes StormWatch NWS alerts (stormwatch/event/alert_issued) by
+    priority. Plain-YAML equivalent of the severe-alerts blueprint.
+  mode: queued
+  max: 10
+  trigger:
+    - platform: mqtt
+      topic: stormwatch/event/alert_issued
+  variables:
+    headline: "{{ trigger.payload_json.headline }}"
+    priority: "{{ trigger.payload_json.priority }}"
+    description: "{{ trigger.payload_json.description }}"
+  action:
+    - choose:
+        # critical: tornado warnings, lightning inside CLOSE_RADIUS. Rare
+        # enough that it never gets ignored — bypasses Do Not Disturb.
+        - conditions:
+            - condition: template
+              value_template: "{{ priority == 'critical' }}"
+          sequence:
+            - service: notify.mobile_app_REPLACE_ME  # <-- substitute your device's notify service
+              data:
+                title: "{{ headline }}"
+                message: "{{ description }}"
+                data:
+                  push:
+                    sound:
+                      name: "default"
+                      critical: 1
+                      volume: 1.0
+
+        # high: severe thunderstorm warnings. Normal push, distinct sound —
+        # audible, but never bypasses Do Not Disturb.
+        - conditions:
+            - condition: template
+              value_template: "{{ priority == 'high' }}"
+          sequence:
+            - service: notify.mobile_app_REPLACE_ME  # <-- substitute your device's notify service
+              data:
+                title: "{{ headline }}"
+                message: "{{ description }}"
+                data:
+                  push:
+                    sound: "default"
+
+        # normal: watches, all-clears. Silent — no sound, no DND bypass.
+        # An all-clear should never wake anyone up.
+        - conditions:
+            - condition: template
+              value_template: "{{ priority == 'normal' }}"
+          sequence:
+            - service: notify.mobile_app_REPLACE_ME  # <-- substitute your device's notify service
+              data:
+                title: "{{ headline }}"
+                message: "{{ description }}"
+                data:
+                  push:
+                    sound: null
+      default: []
+
+- id: stormwatch_pool_closed
+  alias: StormWatch - Pool Closed (Lightning Nearby)
+  description: >-
+    Notifies when StormWatch closes the pool (stormwatch/event/
+    lightning_close, lightning inside CLOSE_RADIUS). Plain-YAML equivalent
+    of the pool-alerts blueprint's closed branch. Critical by default —
+    bypasses Do Not Disturb; edit the payload below to make it a normal
+    push if you'd rather it not.
+  mode: queued
+  max: 10
+  trigger:
+    - platform: mqtt
+      topic: stormwatch/event/lightning_close
+  action:
+    - service: notify.mobile_app_REPLACE_ME  # <-- substitute your device's notify service
+      data:
+        title: "Pool closed — lightning nearby"
+        message: >-
+          Lightning detected {{ trigger.payload_json.distance_km | default('nearby', true) }} km
+          away ({{ trigger.payload_json.bearing_compass | default('unknown', true) }}). Get out of
+          the water.
+        data:
+          push:
+            sound:
+              name: "default"
+              critical: 1
+              volume: 1.0
+
+- id: stormwatch_pool_all_clear
+  alias: StormWatch - Pool All Clear
+  description: >-
+    Notifies when StormWatch's all-clear timer expires
+    (stormwatch/event/all_clear) with no further qualifying lightning.
+    Plain-YAML equivalent of the pool-alerts blueprint's all-clear branch.
+    Always a normal, silent push — never critical, no exception. An
+    all-clear should never wake anyone up (DESIGN.md §8).
+  mode: queued
+  max: 10
+  trigger:
+    - platform: mqtt
+      topic: stormwatch/event/all_clear
+  action:
+    - service: notify.mobile_app_REPLACE_ME  # <-- substitute your device's notify service
+      data:
+        title: "Pool open — all clear"
+        message: "No qualifying lightning detected within range for the configured all-clear window."
+        data:
+          push:
+            sound: null

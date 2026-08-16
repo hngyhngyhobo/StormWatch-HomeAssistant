@@ -1,0 +1,15 @@
+# Syntactically valid YAML but schema-invalid: "super-critical" is not one
+# of critical|high|normal|ignore. Used to prove that a config typo is
+# rejected and the previous good rule set is retained rather than silently
+# dropping the tornado rule.
+version: 1
+
+defaults:
+  priority: ignore
+  min_severity: Moderate
+
+rules:
+  - name: Broken Rule
+    match:
+      event: ["Tornado Warning"]
+    priority: super-critical

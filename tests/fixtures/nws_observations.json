@@ -1,0 +1,820 @@
+{
+  "features": [
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T17:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T17:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T16:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T16:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T15:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T15:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.3
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T14:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T14:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 1.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T13:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T13:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 2.5
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T12:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T12:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "Z",
+          "value": null
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T11:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T11:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T10:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T10:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T09:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T09:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T08:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T08:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T07:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T07:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T06:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T06:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.8
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T05:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T05:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 1.2
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T04:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T04:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T03:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T03:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T02:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T02:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T01:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T01:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-09T00:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-09T00:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "Z",
+          "value": null
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T23:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T23:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.3
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T22:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T22:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 1.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T21:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T21:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 2.5
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T20:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T20:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.5
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T19:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T19:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T18:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T18:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T17:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T17:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T16:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T16:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T15:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T15:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T14:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T14:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.8
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T13:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T13:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 1.2
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T12:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T12:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T11:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T11:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T10:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T10:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T09:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T09:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T08:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T08:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "Z",
+          "value": null
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T07:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T07:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.3
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T06:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T06:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 1.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T05:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T05:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 2.5
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T04:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T04:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.5
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T03:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T03:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T02:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T02:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T01:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T01:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-08T00:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-08T00:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-07T23:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-07T23:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-07T22:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-07T22:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.8
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-07T21:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-07T21:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 1.2
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-07T20:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-07T20:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-07T19:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-07T19:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/stations/KFFC/observations/2026-08-07T18:53:00+00:00",
+      "properties": {
+        "station": "https://api.weather.gov/stations/KFFC",
+        "timestamp": "2026-08-07T18:53:00+00:00",
+        "textDescription": "Mostly Cloudy",
+        "temperature": {
+          "unitCode": "wmoUnit:degC",
+          "value": 24.0
+        },
+        "precipitationLastHour": {
+          "unitCode": "wmoUnit:mm",
+          "qualityControl": "V",
+          "value": 0.0
+        }
+      }
+    }
+  ]
+}

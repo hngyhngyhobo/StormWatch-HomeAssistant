@@ -1,0 +1,73 @@
+{
+  "properties": {
+    "updateTime": "2026-08-09T15:23:00+00:00",
+    "gridId": "FFC",
+    "gridX": 60,
+    "gridY": 66,
+    "quantitativePrecipitation": {
+      "uom": "wmoUnit:mm",
+      "values": [
+        {
+          "validTime": "2026-08-08T12:00:00+00:00/PT6H",
+          "value": 0.0
+        },
+        {
+          "validTime": "2026-08-08T18:00:00+00:00/PT6H",
+          "value": 2.5
+        },
+        {
+          "validTime": "2026-08-09T00:00:00+00:00/PT6H",
+          "value": 1.2
+        },
+        {
+          "validTime": "2026-08-09T06:00:00+00:00/PT6H",
+          "value": 0.0
+        },
+        {
+          "validTime": "2026-08-09T12:00:00+00:00/PT6H",
+          "value": 3.0
+        },
+        {
+          "validTime": "2026-08-09T18:00:00+00:00/PT3H",
+          "value": 1.5
+        },
+        {
+          "validTime": "2026-08-09T21:00:00+00:00/PT6H",
+          "value": 3.0
+        },
+        {
+          "validTime": "2026-08-10T03:00:00+00:00/PT6H",
+          "value": 0.5
+        },
+        {
+          "validTime": "2026-08-10T09:00:00+00:00/PT6H",
+          "value": 2.0
+        },
+        {
+          "validTime": "2026-08-10T15:00:00+00:00/PT6H",
+          "value": 1.0
+        },
+        {
+          "validTime": "2026-08-10T21:00:00+00:00/PT6H",
+          "value": 4.0
+        },
+        {
+          "validTime": "2026-08-11T03:00:00+00:00/PT6H",
+          "value": 0.0
+        },
+        {
+          "validTime": "2026-08-11T09:00:00+00:00/PT6H",
+          "value": 1.5
+        },
+        {
+          "validTime": "2026-08-11T15:00:00+00:00/PT6H",
+          "value": 2.5
+        },
+        {
+          "validTime": "2026-08-11T21:00:00+00:00/PT6H",
+          "value": 3.0
+        }
+      ]
+    }
+  }
+}

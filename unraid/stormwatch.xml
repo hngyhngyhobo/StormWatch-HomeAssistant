@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>StormWatch</Name>
+  <Repository>ghcr.io/hngyhngyhobo/stormwatch:latest</Repository>
+  <Registry>https://ghcr.io/hngyhngyhobo/stormwatch</Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant/issues</Support>
+  <Project>https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant</Project>
+  <Overview>Lightning proximity and NWS severe weather alerts as Home Assistant entities via MQTT auto-discovery. Free data sources by default; no accounts, no API keys. NOT a life-safety system.</Overview>
+  <Category>HomeAutomation Tools:</Category>
+  <Icon>https://raw.githubusercontent.com/hngyhngyhobo/WeatherAlert-HomeAssistant/main/unraid/icon.png</Icon>
+  <ExtraParams/>
+  <WebUI>http://[IP]:[PORT:8099]/healthz</WebUI>
+  <Config Name="MQTT Host" Target="MQTT_HOST" Default="" Mode="" Description="Your Mosquitto broker. Required." Type="Variable" Display="always" Required="true" Mask="false"/>
+  <Config Name="NWS Contact" Target="NWS_CONTACT" Default="" Mode="" Description="Sent in the User-Agent header, per NWS policy. Required." Type="Variable" Display="always" Required="true" Mask="false"/>
+  <Config Name="Location" Target="LOCATION" Default="Atlanta, GA" Mode="" Description="City name, e.g. Asheville, NC. Optional -- defaults to Atlanta, GA (logs a startup warning) if left as-is and Latitude/Longitude are blank. Geocoded once and cached to /config/location.json." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Latitude" Target="LATITUDE" Default="" Mode="" Description="Decimal degrees, e.g. 34.0234. Optional -- recommended over Location for lightning-radius precision (a city geocode lands on the city center). Overrides Location when both Latitude and Longitude are set." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Longitude" Target="LONGITUDE" Default="" Mode="" Description="Decimal degrees, e.g. -84.6155. Optional -- recommended over Location for lightning-radius precision (a city geocode lands on the city center). Overrides Location when both Latitude and Longitude are set." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="MQTT Port" Target="MQTT_PORT" Default="1883" Mode="" Description="Your Mosquitto broker port." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="MQTT Username" Target="MQTT_USERNAME" Default="" Mode="" Description="If your broker requires auth." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="MQTT Password" Target="MQTT_PASSWORD" Default="" Mode="" Description="If your broker requires auth." Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="Units" Target="UNITS" Default="imperial" Mode="" Description="imperial or metric." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Close Radius" Target="CLOSE_RADIUS" Default="10" Mode="" Description="In UNITS." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Watch Radius" Target="WATCH_RADIUS" Default="25" Mode="" Description="In UNITS." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="All Clear Minutes" Target="ALL_CLEAR_MINUTES" Default="30" Mode="" Description="Minutes of no activity before signaling all-clear." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Alerts Critical" Target="ALERTS_CRITICAL" Default="Tornado Warning,Flash Flood Emergency" Mode="" Description="Comma-separated NWS event names." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Alerts High" Target="ALERTS_HIGH" Default="Severe Thunderstorm Warning,Flash Flood Warning" Mode="" Description="Comma-separated NWS event names." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Alerts Normal" Target="ALERTS_NORMAL" Default="Tornado Watch,Severe Thunderstorm Watch" Mode="" Description="Comma-separated NWS event names." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Quiet Hours" Target="QUIET_HOURS" Default="22:00-07:00" Mode="" Description="Applies only to rules with quiet_hours: true." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Log Level" Target="LOG_LEVEL" Default="INFO" Mode="" Description="Logging verbosity, e.g. INFO, DEBUG, WARNING." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="Xweather Client ID" Target="XWEATHER_CLIENT_ID" Default="" Mode="" Description="Optional — premium lightning data. Blank = fully functional free mode. Your own Xweather API client ID." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Xweather Client Secret" Target="XWEATHER_CLIENT_SECRET" Default="" Mode="" Description="Optional — premium lightning data. Blank = fully functional free mode. Your own Xweather API client secret." Type="Variable" Display="advanced" Required="false" Mask="true"/>
+  <Config Name="Xweather Confirm Radius" Target="XWEATHER_CONFIRM_RADIUS" Default="25" Mode="" Description="Optional — premium lightning data. Blank = fully functional free mode. In UNITS. Only confirm strikes already this close." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Xweather Monthly Call Limit" Target="XWEATHER_MONTHLY_CALL_LIMIT" Default="1400" Mode="" Description="Optional — premium lightning data. Blank = fully functional free mode. Kept under the free allowance on purpose." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Xweather Min Call Interval" Target="XWEATHER_MIN_CALL_INTERVAL" Default="60" Mode="" Description="Optional — premium lightning data. Blank = fully functional free mode. Seconds between Xweather API calls." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Blitzortung MQTT Host" Target="BLITZORTUNG_MQTT_HOST" Default="blitzortung.ha.sed.pl" Mode="" Description="Blitzortung community lightning network relay. See design doc §4.1.1 before changing." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Blitzortung Enabled" Target="BLITZORTUNG_ENABLED" Default="true" Mode="" Description="true or false. Disable to run NWS alerts only." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="NWS Enabled" Target="NWS_ENABLED" Default="true" Mode="" Description="Non-US users turn this off." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="NWS Poll Seconds" Target="NWS_POLL_SECONDS" Default="60" Mode="" Description="Floor of 30 enforced." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="NWS API Base" Target="NWS_API_BASE" Default="https://api.weather.gov" Mode="" Description="Testing/override; rarely changed. NWS API base URL." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Config Dir" Target="CONFIG_DIR" Default="/config" Mode="" Description="Path to persistent storage for alert rules and state." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Rain Enabled" Target="RAIN_ENABLED" Default="true" Mode="" Description="Rainfall feature — arriving in this build." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Rain Forecast Poll Seconds" Target="RAIN_FORECAST_POLL_SECONDS" Default="3600" Mode="" Description="Rainfall feature — arriving in this build. Seconds between forecast updates." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Rain Obs Poll Seconds" Target="RAIN_OBS_POLL_SECONDS" Default="900" Mode="" Description="Rainfall feature — arriving in this build. Seconds between observation updates." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Discovery Prefix" Target="DISCOVERY_PREFIX" Default="homeassistant" Mode="" Description="Home Assistant MQTT discovery prefix." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Device Name" Target="DEVICE_NAME" Default="StormWatch" Mode="" Description="Change if running multiple instances." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="Healthz Port" Target="8099" Default="8099" Mode="tcp" Description="Optional. JSON status endpoint at /healthz: source connectivity, current state, quota usage, config validity." Type="Port" Display="always" Required="false" Mask="false"/>
+  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/stormwatch" Mode="rw" Description="Persistent storage for StormWatch state and configuration." Type="Path" Display="always" Required="false" Mask="false"/>
+</Container>

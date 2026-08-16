@@ -1,0 +1,106 @@
+blueprint:
+  name: StormWatch — Pool / Swim Alerts
+  description: >-
+    Notifies a phone when StormWatch's lightning state machine closes the
+    pool (lightning inside CLOSE_RADIUS) and again once it's safe (the
+    ALL_CLEAR_MINUTES timer expires with no further qualifying strikes),
+    per the StormWatch notification discipline (see DESIGN.md §6, §8):
+
+    - Pool closed (stormwatch/event/lightning_close): critical by default
+      — the iOS critical-alert push, which can sound even through Do Not
+      Disturb. Toggle off to use a normal push instead.
+    - All clear (stormwatch/event/all_clear): always a normal, silent
+      push — not configurable. An all-clear should never wake anyone up.
+  domain: automation
+  source_url: https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant/blob/main/examples/blueprints/stormwatch_pool_alerts.yaml
+  input:
+    notify_device:
+      name: Notify Device
+      description: The mobile_app device to notify.
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+    critical_enabled:
+      name: Enable Critical Alerts for Pool Closed
+      description: >-
+        When on, the pool-closed notification uses the iOS critical-alert
+        push. When off, it falls back to a normal (non-DND-bypassing) push
+        instead. Applies only to pool-closed — the all-clear notification
+        is always a normal, silent push, regardless of this setting.
+      default: true
+      selector:
+        boolean: {}
+
+mode: queued
+max: 10
+
+trigger:
+  - platform: mqtt
+    topic: stormwatch/event/lightning_close
+    id: closed
+  - platform: mqtt
+    topic: stormwatch/event/all_clear
+    id: all_clear
+
+variables:
+  critical_enabled: !input critical_enabled
+
+action:
+  - choose:
+      # Pool closed: critical by default (rare enough it never gets
+      # ignored) — bypasses Do Not Disturb unless the toggle is off.
+      - conditions:
+          - condition: trigger
+            id: closed
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ critical_enabled }}"
+                sequence:
+                  - device_id: !input notify_device
+                    domain: mobile_app
+                    type: notify
+                    title: "Pool closed — lightning nearby"
+                    message: >-
+                      Lightning detected {{ trigger.payload_json.distance_km | default('nearby',
+                      true) }} km away ({{ trigger.payload_json.bearing_compass | default('unknown',
+                      true) }}). Get out of the water.
+                    data:
+                      push:
+                        sound:
+                          name: "default"
+                          critical: 1
+                          volume: 1.0
+            default:
+              # critical_enabled toggled off — send a normal push instead
+              # of the DND-bypassing critical-alert payload.
+              - device_id: !input notify_device
+                domain: mobile_app
+                type: notify
+                title: "Pool closed — lightning nearby"
+                message: >-
+                  Lightning detected {{ trigger.payload_json.distance_km | default('nearby', true)
+                  }} km away ({{ trigger.payload_json.bearing_compass | default('unknown', true)
+                  }}). Get out of the water.
+                data:
+                  push:
+                    sound: "default"
+
+      # All clear: always a normal, silent push — never critical, no
+      # exception, no toggle. An all-clear should never wake anyone up
+      # (DESIGN.md §8 notification discipline).
+      - conditions:
+          - condition: trigger
+            id: all_clear
+        sequence:
+          - device_id: !input notify_device
+            domain: mobile_app
+            type: notify
+            title: "Pool open — all clear"
+            message: "No qualifying lightning detected within range for the configured all-clear window."
+            data:
+              push:
+                sound: null
+    default: []
