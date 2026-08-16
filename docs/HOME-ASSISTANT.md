@@ -60,10 +60,11 @@ Xweather call tracking — is **planned for Phase 4 (Xweather)** and does not ex
 | `sensor.stormwatch_rain_forecast_48h` | rain amount (`in`/`mm`) | Forecast rainfall over the next 48 hours (rolling from now) |
 | `sensor.stormwatch_rain_last_24h` | rain amount (`in`/`mm`) | Observed rainfall in the trailing 24 hours; hourly breakdown in attributes |
 | `sensor.stormwatch_rain_last_7d` | rain amount (`in`/`mm`) | Observed rainfall in the trailing 7 days |
+| `binary_sensor.stormwatch_watering_needed` | binary | On when watering is warranted: under 0.1 in in the last 24h **and** under 0.1 in forecast over the next 48h **and** under 0.5 in over the last 7 days. Off whenever any of those inputs is unavailable — it never asserts a need from incomplete data. Build watering automations on this flag. |
 | `binary_sensor.stormwatch_rain_available` | binary (`connectivity`, diagnostic) | On when the NWS rainfall data source is reachable |
-| `sensor.stormwatch_strikes` | count | Count of recent lightning strikes (last `STRIKE_MAP_WINDOW_MINUTES`); a GeoJSON `FeatureCollection` of strike points (distance/bearing/age/range per point) is in the `geojson` attribute — see [Lightning strike map](#lightning-strike-map) below |
+| `sensor.stormwatch_lightning_strikes` | count | Count of recent lightning strikes (last `STRIKE_MAP_WINDOW_MINUTES`); a GeoJSON `FeatureCollection` of strike points (distance/bearing/age/range per point) is in the `geojson` attribute — see [Lightning strike map](#lightning-strike-map) below |
 
-The lightning/pool entities (rows 7-13, plus `sensor.stormwatch_strikes`) only appear when `BLITZORTUNG_ENABLED` is true (the
+The lightning/pool entities (rows 7-13, plus `sensor.stormwatch_lightning_strikes`) only appear when `BLITZORTUNG_ENABLED` is true (the
 default), and the rainfall entities (last five rows) only appear when `RAIN_ENABLED` is true (also
 the default, US locations only) — see [CONFIGURATION.md](CONFIGURATION.md#advanced).
 
@@ -170,7 +171,7 @@ the `light.smart_lamp_1` placeholder with your lamp's real entity ID (find it un
 
 ## Lightning strike map
 
-`sensor.stormwatch_strikes`'s `geojson` attribute (a GeoJSON `FeatureCollection` of recent strike
+`sensor.stormwatch_lightning_strikes`'s `geojson` attribute (a GeoJSON `FeatureCollection` of recent strike
 points, each with `distance`/`bearing`/`bearing_deg`/`age_seconds`/`range` properties) can be
 rendered on an actual map card via the community
 [`nathan-gs/ha-map-card`](https://github.com/nathan-gs/ha-map-card) (`custom:map-card`) — not a
@@ -194,11 +195,15 @@ Without HACS, manually:
 
 Paste [examples/lightning-map-card.yaml](../examples/lightning-map-card.yaml) into a dashboard view
 (YAML mode, or the raw card editor), setting `x`/`y` to your own home latitude/longitude. Strikes
-render as points from `sensor.stormwatch_strikes`'s `geojson` attribute; the two rings are
-`zone.home` `circle` overlays at `CLOSE_RADIUS` and `WATCH_RADIUS` (10 mi / 25 mi by default —
-adjust the `radius` values, in meters, if you've changed those or use `UNITS=metric`). The map
-window of strike history shown is controlled by `STRIKE_MAP_WINDOW_MINUTES` (default 30 minutes —
-see [CONFIGURATION.md](CONFIGURATION.md#advanced)).
+render as points from `sensor.stormwatch_lightning_strikes`'s `geojson` attribute; the three rings
+are `zone.home` `circle` overlays at 10/20/30 mi (`radius` in meters — `16093`/`32187`/`48280`;
+adjust them, or use `UNITS=metric`, to taste). The example also overlays **live NWS rain radar**
+(NEXRAD base reflectivity via the free Iowa Environmental Mesonet WMS — no API key); delete the
+`wms:` block for lightning only. Note the radar shows rain happening *now*, not a forecast — for
+"is rain coming / should I water" use the rain sensors (see the watering card in
+[examples/dashboard.yaml](../examples/dashboard.yaml)). The map window of strike history shown is
+controlled by `STRIKE_MAP_WINDOW_MINUTES` (default 30 minutes — see
+[CONFIGURATION.md](CONFIGURATION.md#advanced)).
 
 <!-- screenshot: lightning strike map card with close/watch rings -->
 

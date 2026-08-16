@@ -97,7 +97,7 @@ to tweak. (Your location has its own section just above —
 | **Watch Radius** | `WATCH_RADIUS` | `25` | The **heads-up ring**. A strike inside this distance but outside Close Radius is a warning to keep an eye on the sky; the pool stays open. |
 | **All Clear Minutes** | `ALL_CLEAR_MINUTES` | `30` | Minutes with no qualifying strikes before StormWatch calls the all-clear. |
 | **Quiet Hours** | `QUIET_HOURS` | `22:00-07:00` | The window during which alert rules flagged `quiet_hours: true` stay silent. |
-| **Strike Map Window Minutes** | `STRIKE_MAP_WINDOW_MINUTES` | `30` | How many minutes of lightning history show up on the strike map / `sensor.stormwatch_strikes`. |
+| **Strike Map Window Minutes** | `STRIKE_MAP_WINDOW_MINUTES` | `30` | How many minutes of lightning history show up on the strike map / `sensor.stormwatch_lightning_strikes`. |
 
 Like the two required fields, these live on the container's **Edit** screen in Unraid — change a
 value and click **Apply**. Unraid recreates the container with the new value; your `/config` volume

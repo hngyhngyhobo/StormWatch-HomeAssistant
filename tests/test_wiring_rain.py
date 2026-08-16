@@ -285,6 +285,82 @@ def test_obs_cycle_does_not_log_station_line_while_still_unresolved(caplog) -> N
     assert not any("Using observation station" in r.getMessage() for r in caplog.records)
 
 
+# --- RainWiring watering flag (weekly-aware) ------------------------------------
+
+
+def _watering_wiring(publisher, forecast, totals, units="imperial"):
+    source = FakeRainSource(forecast=forecast)
+    store = FakeRainStore(totals=totals)
+    return RainWiring(_config(units=units), source, store, publisher)
+
+
+def test_watering_needed_on_when_all_windows_dry() -> None:
+    # dry last 24h + dry next 48h + dry 7-day -> water today
+    publisher = FakePublisher()
+    wiring = _watering_wiring(
+        publisher, forecast={"today_mm": 0.0, "h48_mm": 0.0}, totals={"h24_mm": 0.0, "d7_mm": 0.0}
+    )
+    wiring.run_forecast_cycle()
+    wiring.run_obs_cycle(NOW)
+    assert publisher.last_state("watering_needed") == (True, None)
+
+
+def test_watering_needed_off_when_rain_in_last_24h() -> None:
+    # 5 mm (~0.2 in) fell in the last 24h -> skip watering
+    publisher = FakePublisher()
+    wiring = _watering_wiring(
+        publisher, forecast={"today_mm": 0.0, "h48_mm": 0.0}, totals={"h24_mm": 5.0, "d7_mm": 5.0}
+    )
+    wiring.run_forecast_cycle()
+    wiring.run_obs_cycle(NOW)
+    assert publisher.last_state("watering_needed") == (False, None)
+
+
+def test_watering_needed_off_when_rain_forecast_next_48h() -> None:
+    # 5 mm (~0.2 in) forecast in the next 48h -> skip watering
+    publisher = FakePublisher()
+    wiring = _watering_wiring(
+        publisher, forecast={"today_mm": 0.0, "h48_mm": 5.0}, totals={"h24_mm": 0.0, "d7_mm": 0.0}
+    )
+    wiring.run_forecast_cycle()
+    wiring.run_obs_cycle(NOW)
+    assert publisher.last_state("watering_needed") == (False, None)
+
+
+def test_watering_needed_off_when_week_already_wet() -> None:
+    # dry 24h + dry forecast, but 15 mm (~0.6 in) over the last 7 days -> the
+    # weekly-aware gate keeps it OFF (a big storm earlier in the week counts)
+    publisher = FakePublisher()
+    wiring = _watering_wiring(
+        publisher, forecast={"today_mm": 0.0, "h48_mm": 0.0}, totals={"h24_mm": 0.0, "d7_mm": 15.0}
+    )
+    wiring.run_forecast_cycle()
+    wiring.run_obs_cycle(NOW)
+    assert publisher.last_state("watering_needed") == (False, None)
+
+
+def test_watering_needed_off_when_data_incomplete() -> None:
+    # only a forecast cycle has run (no observations yet) -> not confidently
+    # dry, so the flag stays OFF rather than guessing
+    publisher = FakePublisher()
+    source = FakeRainSource(forecast={"today_mm": 0.0, "h48_mm": 0.0})
+    wiring = RainWiring(_config(), source, FakeRainStore(), publisher)
+    wiring.run_forecast_cycle()
+    assert publisher.last_state("watering_needed") == (False, None)
+
+
+def test_watering_needed_off_when_forecast_poll_failed() -> None:
+    # observations are dry but the forecast poll failed -> unknown upcoming
+    # rain, so do not assert "needs water"
+    publisher = FakePublisher()
+    source = FakeRainSource(forecast=None, available=False)
+    store = FakeRainStore(totals={"h24_mm": 0.0, "d7_mm": 0.0})
+    wiring = RainWiring(_config(), source, store, publisher)
+    wiring.run_obs_cycle(NOW)
+    wiring.run_forecast_cycle()
+    assert publisher.last_state("watering_needed") == (False, None)
+
+
 # --- entity registry -------------------------------------------------------------
 
 
@@ -298,6 +374,7 @@ def test_rain_entities_cover_the_d_milestone_entity_map() -> None:
         "rain_last_24h",
         "rain_last_7d",
         "rain_available",
+        "watering_needed",
     }
     by_key = {entity.key: entity for entity in entities}
     for key in ("rain_forecast_today", "rain_forecast_48h", "rain_last_24h", "rain_last_7d"):
@@ -306,6 +383,7 @@ def test_rain_entities_cover_the_d_milestone_entity_map() -> None:
         assert by_key[key].unit == "in"
     assert by_key["rain_last_24h"].value_is_json_attr is True
     assert by_key["rain_available"].component == "binary_sensor"
+    assert by_key["watering_needed"].component == "binary_sensor"
     assert by_key["rain_available"].device_class == "connectivity"
     assert by_key["rain_available"].entity_category == "diagnostic"
 

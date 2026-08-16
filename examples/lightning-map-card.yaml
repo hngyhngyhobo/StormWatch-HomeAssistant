@@ -5,23 +5,35 @@
 # (HACS or manual). Paste this into a Lovelace view in YAML mode, or the
 # raw card editor of a manually-configured dashboard.
 #
-# Strikes render from sensor.stormwatch_strikes's geojson attribute (a
-# GeoJSON FeatureCollection, refreshed every tick -- see DESIGN.md §6/§8).
-# The two rings are zone.home circle overlays at CLOSE_RADIUS/WATCH_RADIUS.
+# Strikes render from sensor.stormwatch_lightning_strikes's geojson attribute
+# (a GeoJSON FeatureCollection, refreshed every tick -- see DESIGN.md §6/§8).
+# The rings are zone.home circle overlays at 10/20/30 mi. The optional `wms`
+# block overlays live NWS rain radar (Iowa Environmental Mesonet, no API key).
 
 type: custom:map-card
 x: 33.7490        # example only (Atlanta, GA) — REQUIRED: set to your home latitude
 y: -84.3880       # example only — REQUIRED: set to your home longitude
-zoom: 10
+zoom: 9
 card_size: 8
+# Live rain radar overlay (NEXRAD base reflectivity, IEM WMS -- free, no key).
+# Delete this whole `wms:` block if you want lightning only, no rain.
+wms:
+  - url: https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0q.cgi
+    options:
+      layers: nexrad-n0q-900913
+      format: image/png
+      transparent: true
 entities:
-  - entity: sensor.stormwatch_strikes
+  - entity: sensor.stormwatch_lightning_strikes
     geojson:
       attribute: geojson
-      color: '#ffcc00'
+      color: '#ffee00'
+      weight: 2
+      fill_opacity: 0.9
+      hide_marker: true   # required: the strikes sensor has no location of its own
   - entity: zone.home
-    display: marker
-    label: Home
-    circle: { source: config, radius: 16093, color: '#ff3333', fill_opacity: 0.05 }   # 10 mi no-swim ring
+    circle: { source: config, radius: 16093, color: '#ff3333', fill_opacity: 0.02 }   # 10 mi
   - entity: zone.home
-    circle: { source: config, radius: 40233, color: '#ffaa33', fill_opacity: 0.03 }   # 25 mi watch ring
+    circle: { source: config, radius: 32187, color: '#ff9933', fill_opacity: 0.02 }   # 20 mi
+  - entity: zone.home
+    circle: { source: config, radius: 48280, color: '#ffdd33', fill_opacity: 0.02 }   # 30 mi

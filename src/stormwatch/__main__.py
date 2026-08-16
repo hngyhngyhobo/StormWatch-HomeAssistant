@@ -57,6 +57,11 @@ _STRIKE_WINDOW_SECONDS = 900.0  # 15 minutes, for strike_count_15m
 _REPUBLISH_EVERY_TICKS = 60  # ~60s at _LIGHTNING_TICK_SECONDS, retained-store-loss resilience
 _KM_PER_MILE = 1.609344  # mirrors config.py's UNITS<->km conversion factor
 _MM_PER_INCH = 25.4
+# Watering-flag thresholds (mm, unit-agnostic internally). "Recent"/"imminent"
+# gate (0.1 in) matches the watering-reminder automation; the weekly gate
+# (0.5 in) keeps the flag OFF when a storm earlier in the week already watered.
+_WATERING_RECENT_MM = 2.54
+_WATERING_WEEK_MM = 12.7
 
 
 def _format_rain_mm(mm: float, units: str) -> str:
@@ -233,6 +238,12 @@ def _rain_entities(config: Config) -> tuple[EntitySpec, ...]:
             device_class="connectivity",
             entity_category="diagnostic",
         ),
+        EntitySpec(
+            key="watering_needed",
+            name="Watering Needed",
+            component="binary_sensor",
+            icon="mdi:watering-can",
+        ),
     )
 
 
@@ -303,7 +314,7 @@ class LightningWiring:
         self._strike_buffer = StrikeBuffer(config.strike_map_window_minutes * 60, clock=clock)
         # True (not False): the very first tick() must publish an initial
         # "strikes" value (count 0, empty geojson) even with zero strikes so
-        # far -- otherwise sensor.stormwatch_strikes sits at HA's "unknown"
+        # far -- otherwise sensor.stormwatch_lightning_strikes sits at HA's "unknown"
         # until either a real strike arrives or the 60s force-republish.
         self._strikes_dirty = True
         self._last_bearing_deg: float | None = None
@@ -558,6 +569,8 @@ class RainWiring:
         self._publisher = publisher
         self._station_logged = False
         self.last_24h_mm: float | None = None
+        self.last_7d_mm: float | None = None
+        self.last_forecast_48h_mm: float | None = None
 
     def run_forecast_cycle(self) -> dict | None:
         """One gridpoint QPF poll -> publish cycle: ``rain_forecast_today``
@@ -565,9 +578,11 @@ class RainWiring:
         units), plus ``rain_available`` (always)."""
         result = self._source.poll_forecast()
         if result is None:
+            self.last_forecast_48h_mm = None
             self._publisher.publish_state("rain_forecast_today", "None")
             self._publisher.publish_state("rain_forecast_48h", "None")
         else:
+            self.last_forecast_48h_mm = result["h48_mm"]
             self._publisher.publish_state(
                 "rain_forecast_today",
                 _format_rain_mm(result["today_mm"], self._config.units),
@@ -577,6 +592,7 @@ class RainWiring:
                 _format_rain_mm(result["h48_mm"], self._config.units),
             )
         self._publish_available()
+        self._publish_watering_needed()
         return result
 
     def run_obs_cycle(self, now: datetime) -> dict | None:
@@ -592,7 +608,9 @@ class RainWiring:
             self._publisher.publish_state("rain_last_24h", "None")
             self._publisher.publish_state("rain_last_7d", "None")
             self.last_24h_mm = None
+            self.last_7d_mm = None
             self._publish_available()
+            self._publish_watering_needed()
             return None
 
         self._maybe_log_station()
@@ -600,6 +618,7 @@ class RainWiring:
         totals = self._store.totals(now)
         hourly = self._store.hourly_24(now)
         self.last_24h_mm = totals["h24_mm"]
+        self.last_7d_mm = totals["d7_mm"]
         self._publisher.publish_state(
             "rain_last_24h",
             _format_rain_mm(totals["h24_mm"], self._config.units),
@@ -609,10 +628,31 @@ class RainWiring:
             "rain_last_7d", _format_rain_mm(totals["d7_mm"], self._config.units)
         )
         self._publish_available()
+        self._publish_watering_needed()
         return totals
 
     def _publish_available(self) -> None:
         self._publisher.publish_state("rain_available", self._source.available)
+
+    def _publish_watering_needed(self) -> None:
+        """Publish the derived watering flag. It draws on values cached by BOTH
+        poll cycles (24h/7d observed from obs, 48h forecast), so it is
+        republished at the end of each cycle; until both have run at least once
+        it stays OFF (see _watering_needed)."""
+        self._publisher.publish_state("watering_needed", self._watering_needed())
+
+    def _watering_needed(self) -> bool:
+        """True when watering is warranted: last-24h observed AND next-48h
+        forecast are both under _WATERING_RECENT_MM (~0.1 in) AND the 7-day
+        observed total is under _WATERING_WEEK_MM (~0.5 in). Any missing input
+        (a cycle that hasn't run yet or whose poll failed) yields False -- the
+        flag asserts a need only when it is sure, never from incomplete data.
+        Rain is a non-safety feature, so 'unknown' collapses to 'no need to
+        water', not a guess."""
+        v24, v48, v7 = self.last_24h_mm, self.last_forecast_48h_mm, self.last_7d_mm
+        if v24 is None or v48 is None or v7 is None:
+            return False
+        return v24 < _WATERING_RECENT_MM and v48 < _WATERING_RECENT_MM and v7 < _WATERING_WEEK_MM
 
     def _maybe_log_station(self) -> None:
         # RainSource resolves its observation station lazily (station

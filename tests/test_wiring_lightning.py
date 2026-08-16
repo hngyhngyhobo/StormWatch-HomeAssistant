@@ -265,7 +265,7 @@ def test_strike_count_15m_increments_per_strike_and_decays_after_window() -> Non
     assert publisher.last_state("strike_count_15m") == (0, None)
 
 
-# --- strikes map (StrikeBuffer -> sensor.stormwatch_strikes geojson) ----------
+# --- strikes map (StrikeBuffer -> sensor.stormwatch_lightning_strikes geojson) ----------
 
 
 def test_tick_publishes_strikes_entity_with_geojson_feature_per_strike() -> None:
@@ -287,7 +287,7 @@ def test_tick_publishes_strikes_entity_with_geojson_feature_per_strike() -> None
 def test_first_tick_with_no_strikes_publishes_initial_empty_strikes_state() -> None:
     # Fix 1: a freshly-constructed LightningWiring must publish an initial
     # "strikes" value on the very first tick, even with zero strikes so far
-    # -- otherwise sensor.stormwatch_strikes sits at HA's "unknown" until
+    # -- otherwise sensor.stormwatch_lightning_strikes sits at HA's "unknown" until
     # either the first real strike or the 60s force-republish cycle.
     publisher = FakePublisher()
     wiring = LightningWiring(_config(), publisher, clock=FakeClock())
