@@ -79,6 +79,7 @@ class Config:
     discovery_prefix: str = "homeassistant"
     device_name: str = "StormWatch"
     config_dir: str = "/config"  # advanced; default /config
+    strike_map_window_minutes: int = 30
 
 
 def _optional_float(environ: Mapping[str, str], name: str, default: float | None) -> float | None:
@@ -268,4 +269,5 @@ def load_config(environ: Mapping[str, str] | None = None) -> Config:
         discovery_prefix=_optional_str(env, "DISCOVERY_PREFIX", "homeassistant"),
         device_name=_optional_str(env, "DEVICE_NAME", "StormWatch"),
         config_dir=_optional_str(env, "CONFIG_DIR", "/config"),
+        strike_map_window_minutes=max(1, _optional_int(env, "STRIKE_MAP_WINDOW_MINUTES", 30)),
     )

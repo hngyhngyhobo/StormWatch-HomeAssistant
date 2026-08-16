@@ -34,6 +34,7 @@ from stormwatch.sources.blitzortung import BlitzortungClient
 from stormwatch.sources.nws import NwsPoller
 from stormwatch.sources.rain import RainSource, RainStore
 from stormwatch.state import LightningStateMachine
+from stormwatch.strikes import StrikeBuffer
 
 if TYPE_CHECKING:
     from stormwatch.rules import AlertEvent
@@ -175,6 +176,14 @@ def _lightning_entities(config: Config) -> tuple[EntitySpec, ...]:
             device_class="connectivity",
             entity_category="diagnostic",
         ),
+        EntitySpec(
+            key="strikes",
+            name="Lightning Strikes",
+            component="sensor",
+            state_class="measurement",
+            icon="mdi:flash",
+            value_is_json_attr=True,
+        ),
     )
 
 
@@ -291,6 +300,12 @@ class LightningWiring:
         )
         self._lock = threading.Lock()
         self._strike_times: deque[float] = deque()
+        self._strike_buffer = StrikeBuffer(config.strike_map_window_minutes * 60, clock=clock)
+        # True (not False): the very first tick() must publish an initial
+        # "strikes" value (count 0, empty geojson) even with zero strikes so
+        # far -- otherwise sensor.stormwatch_strikes sits at HA's "unknown"
+        # until either a real strike arrives or the 60s force-republish.
+        self._strikes_dirty = True
         self._last_bearing_deg: float | None = None
         self._published: dict[str, tuple[object, str | None]] = {}
         self._tick_count = 0
@@ -311,12 +326,22 @@ class LightningWiring:
         with self._lock:
             return self._state.state
 
-    def on_strike(self, distance_km: float, bearing_deg: float, age_s: float) -> None:
+    def on_strike(
+        self, distance_km: float, bearing_deg: float, age_s: float, lat: float, lon: float
+    ) -> None:
         """BlitzortungClient's on_strike callback -- runs on paho's own
         network thread, so everything touching shared state is lock-guarded.
+
+        Retains the strike's position in ``self._strike_buffer`` (for the
+        ``strikes`` map entity) and marks it dirty, but deliberately does
+        NOT publish the geojson itself -- that only happens from ``tick``,
+        throttling republishes to <=1/sec even under a strike burst (see
+        the class docstring and ``tick``'s).
         """
         with self._lock:
             self._strike_times.append(self._clock())
+            self._strike_buffer.add(lat, lon, distance_km, bearing_deg)
+            self._strikes_dirty = True
             self._last_bearing_deg = bearing_deg
             events = self._state.on_strike(distance_km)
             self._publish_state_locked()
@@ -345,6 +370,8 @@ class LightningWiring:
         """
         with self._lock:
             self._prune_locked()
+            if self._strike_buffer.prune():
+                self._strikes_dirty = True
             self._handle_availability_transition_locked(available)
             events: list[str] = []
             if available:
@@ -357,6 +384,7 @@ class LightningWiring:
             self._tick_count += 1
             force = self._tick_count % _REPUBLISH_EVERY_TICKS == 0
             self._publish_state_locked(force=force)
+            self._publish_strikes_locked(force=force)
         self._publisher.publish_state("lightning_available", available)
         for event in events:
             self._publish_event(event, None, None)
@@ -407,6 +435,29 @@ class LightningWiring:
         self._publish_if_changed("strike_count_15m", len(self._strike_times), force=force)
         self._publish_if_changed("all_clear_at", self._all_clear_at_iso(), force=force)
         self._publish_if_changed("lightning_nearby", self._state.state == "CLOSED", force=force)
+
+    def _publish_strikes_locked(self, force: bool = False) -> None:
+        """Publish ``strikes`` (count + geojson attrs) only when something
+        actually changed (a new strike arrived, or pruning dropped one) or
+        the periodic force-republish is happening -- unlike
+        ``_publish_if_changed``'s per-key cache, this uses the dedicated
+        ``self._strikes_dirty`` flag set by ``on_strike``/``tick``'s own
+        prune, since the geojson blob itself is too large/variable to
+        usefully compare for equality on every tick."""
+        if not (self._strikes_dirty or force):
+            return
+        self._publisher.publish_state(
+            "strikes",
+            len(self._strike_buffer),
+            attrs={
+                "geojson": self._strike_buffer.to_geojson(
+                    self._config.close_radius_km,
+                    self._config.watch_radius_km,
+                    self._config.units,
+                )
+            },
+        )
+        self._strikes_dirty = False
 
     def _distance_value(self) -> float | str:
         # Literal "None" (not "" and not skipping the publish): Home
@@ -1134,8 +1185,10 @@ def _make_blitzortung_client(config: Config, supervisor: Supervisor) -> Blitzort
     attributes that only the real Supervisor carries.
     """
 
-    def _on_strike(distance_km: float, bearing_deg: float, age_s: float) -> None:
-        supervisor._lightning.on_strike(distance_km, bearing_deg, age_s)
+    def _on_strike(
+        distance_km: float, bearing_deg: float, age_s: float, lat: float, lon: float
+    ) -> None:
+        supervisor._lightning.on_strike(distance_km, bearing_deg, age_s, lat, lon)
 
     return BlitzortungClient(config, _on_strike)
 

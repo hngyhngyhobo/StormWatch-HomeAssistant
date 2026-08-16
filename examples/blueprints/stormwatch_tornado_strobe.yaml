@@ -1,0 +1,133 @@
+blueprint:
+  name: StormWatch — Tornado Warning Lamp Strobe
+  description: >-
+    Strobes a lamp on and off when StormWatch publishes a Tornado Warning, to
+    physically wake a sleeper — a bedside lamp flashing at 3 a.m. wakes you
+    when a silent banner won't. It triggers on stormwatch/event/alert_issued
+    and fires ONLY when the NWS event is exactly "Tornado Warning" (see
+    DESIGN.md §7): other critical alerts (lightning inside CLOSE_RADIUS, Flash
+    Flood Emergency, Extreme Wind Warning) still notify but never touch the
+    lamp.
+
+    This is deliberately separate from the notification blueprints: it can be
+    tested or disabled on its own and can never interfere with the critical
+    push path. Run it alongside the Severe Weather Alerts blueprint — that one
+    still delivers the iOS critical-alert push; this one just makes the room
+    flash.
+
+    By default it flashes 8 times at ~0.3 s on / ~0.3 s off (≈5 s total) and
+    leaves the lamp ON at full brightness so the room stays lit while you move
+    to shelter. transition: 0 forces a hard on/off — a bulb that fades between
+    states turns a strobe to mush; if your bulb ignores transition it still
+    works, just with softer edges.
+  domain: automation
+  source_url: https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant/blob/main/examples/blueprints/stormwatch_tornado_strobe.yaml
+  input:
+    strobe_light:
+      name: Strobe Light
+      description: >-
+        The light to flash — e.g. your nightstand lamp. Any HA light entity
+        works regardless of its firmware (Zigbee, Wi-Fi, ESPHome); no device
+        code changes are needed.
+      selector:
+        target:
+          entity:
+            - domain: light
+    flash_count:
+      name: Flash Count
+      description: >-
+        How many on/off cycles to run. Total strobe time ≈ Flash Count ×
+        2 × Flash Interval. Default 8 (≈5 s at the default interval).
+      default: 8
+      selector:
+        number:
+          min: 1
+          max: 60
+          step: 1
+          mode: box
+          unit_of_measurement: flashes
+    flash_interval_ms:
+      name: Flash Interval (ms)
+      description: >-
+        How long the lamp stays on, and how long it stays off, in each cycle
+        (milliseconds). Default 300 (≈0.3 s on, 0.3 s off).
+      default: 300
+      selector:
+        number:
+          min: 100
+          max: 2000
+          step: 50
+          mode: slider
+          unit_of_measurement: ms
+    brightness_pct:
+      name: Strobe Brightness
+      description: Brightness of each ON flash, as a percentage.
+      default: 100
+      selector:
+        number:
+          min: 1
+          max: 100
+          step: 1
+          mode: slider
+          unit_of_measurement: "%"
+    end_on:
+      name: Leave Lamp On After Strobe
+      description: >-
+        When on (default), the lamp is left ON at the strobe brightness after
+        the flashing stops, so the room stays lit while you get to shelter.
+        When off, the lamp is turned off after the strobe.
+      default: true
+      selector:
+        boolean: {}
+
+mode: restart
+
+trigger:
+  - platform: mqtt
+    topic: stormwatch/event/alert_issued
+
+variables:
+  end_on: !input end_on
+
+# Fire only on an exact "Tornado Warning". Keying on the NWS event string
+# (not on priority == 'critical') keeps lightning-close and other critical
+# alerts from strobing the bedroom — they still notify via the other
+# blueprints.
+condition:
+  - condition: template
+    value_template: "{{ trigger.payload_json.event == 'Tornado Warning' }}"
+
+action:
+  - repeat:
+      count: !input flash_count
+      sequence:
+        - service: light.turn_on
+          target: !input strobe_light
+          data:
+            brightness_pct: !input brightness_pct
+            transition: 0
+        - delay:
+            milliseconds: !input flash_interval_ms
+        - service: light.turn_off
+          target: !input strobe_light
+          data:
+            transition: 0
+        - delay:
+            milliseconds: !input flash_interval_ms
+  # End state: leave the lamp on full/at-strobe brightness so the room stays
+  # lit, or turn it off — per the "Leave Lamp On After Strobe" input.
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ end_on }}"
+        sequence:
+          - service: light.turn_on
+            target: !input strobe_light
+            data:
+              brightness_pct: !input brightness_pct
+              transition: 0
+    default:
+      - service: light.turn_off
+        target: !input strobe_light
+        data:
+          transition: 0

@@ -140,7 +140,7 @@ def test_strike_within_close_radius_publishes_closed_once_and_emits_event_once()
     publisher = FakePublisher()
     wiring = LightningWiring(_config(), publisher, clock=clock)
 
-    wiring.on_strike(8.0, 225.0, 0.0)
+    wiring.on_strike(8.0, 225.0, 0.0, 34.1, -84.1)
 
     assert publisher.last_state("swim_status") == ("CLOSED", None)
     assert publisher.last_state("lightning_nearby") == (True, None)
@@ -154,9 +154,9 @@ def test_second_qualifying_strike_does_not_reemit_lightning_close() -> None:
     publisher = FakePublisher()
     wiring = LightningWiring(_config(), publisher, clock=clock)
 
-    wiring.on_strike(8.0, 225.0, 0.0)
+    wiring.on_strike(8.0, 225.0, 0.0, 34.1, -84.1)
     clock.advance(60)
-    wiring.on_strike(5.0, 230.0, 0.0)
+    wiring.on_strike(5.0, 230.0, 0.0, 34.1, -84.1)
 
     assert len(publisher.events) == 1
 
@@ -165,16 +165,28 @@ def test_tick_with_no_new_strikes_does_not_republish_unchanged_keys() -> None:
     clock = FakeClock()
     publisher = FakePublisher()
     wiring = LightningWiring(_config(), publisher, clock=clock)
-    wiring.on_strike(8.0, 225.0, 0.0)
+    wiring.on_strike(8.0, 225.0, 0.0, 34.1, -84.1)
     count_before = len(publisher.states)
 
     wiring.tick(available=True)
 
     new_states = publisher.states[count_before:]
-    non_heartbeat = [entry for entry in new_states if entry[0] != "lightning_available"]
+    # "strikes" is expected here too: on_strike marks the strike buffer
+    # dirty, and this is the first tick since -- but nothing else (that
+    # on_strike's own _publish_state_locked call already republished)
+    # should fire again just because a tick happened.
+    non_heartbeat = [
+        entry for entry in new_states if entry[0] not in ("lightning_available", "strikes")
+    ]
     assert non_heartbeat == []
-    # The availability heartbeat itself is expected to republish every tick.
-    assert [entry[0] for entry in new_states] == ["lightning_available"]
+    assert {entry[0] for entry in new_states} == {"lightning_available", "strikes"}
+
+    # A second, unchanged tick must not republish "strikes" again -- the
+    # dirty flag was cleared by the first tick's publish.
+    count_before_second = len(publisher.states)
+    wiring.tick(available=True)
+    new_keys_second = [entry[0] for entry in publisher.states[count_before_second:]]
+    assert new_keys_second == ["lightning_available"]
 
 
 def test_lightning_available_heartbeat_republishes_every_tick_even_when_unchanged() -> None:
@@ -214,6 +226,7 @@ def test_tick_force_republishes_all_lightning_keys_every_60th_tick() -> None:
         "all_clear_at",
         "lightning_nearby",
         "lightning_available",
+        "strikes",
     }
 
 
@@ -240,16 +253,83 @@ def test_strike_count_15m_increments_per_strike_and_decays_after_window() -> Non
     publisher = FakePublisher()
     wiring = LightningWiring(_config(), publisher, clock=clock)
 
-    wiring.on_strike(30.0, 180.0, 0.0)
+    wiring.on_strike(30.0, 180.0, 0.0, 34.1, -84.1)
     assert publisher.last_state("strike_count_15m") == (1, None)
 
     clock.advance(10)
-    wiring.on_strike(28.0, 180.0, 0.0)
+    wiring.on_strike(28.0, 180.0, 0.0, 34.1, -84.1)
     assert publisher.last_state("strike_count_15m") == (2, None)
 
     clock.advance(901)  # both strikes now outside the 15-minute ring window
     wiring.tick(available=True)
     assert publisher.last_state("strike_count_15m") == (0, None)
+
+
+# --- strikes map (StrikeBuffer -> sensor.stormwatch_strikes geojson) ----------
+
+
+def test_tick_publishes_strikes_entity_with_geojson_feature_per_strike() -> None:
+    clock = FakeClock()
+    publisher = FakePublisher()
+    wiring = LightningWiring(_config(), publisher, clock=clock)
+
+    wiring.on_strike(8.0, 225.0, 0.0, 34.1, -84.1)
+    wiring.on_strike(5.0, 230.0, 0.0, 34.2, -84.2)
+
+    wiring.tick(available=True)
+
+    value, attrs = publisher.last_state("strikes")
+    assert value == 2
+    assert attrs["geojson"]["type"] == "FeatureCollection"
+    assert len(attrs["geojson"]["features"]) == 2
+
+
+def test_first_tick_with_no_strikes_publishes_initial_empty_strikes_state() -> None:
+    # Fix 1: a freshly-constructed LightningWiring must publish an initial
+    # "strikes" value on the very first tick, even with zero strikes so far
+    # -- otherwise sensor.stormwatch_strikes sits at HA's "unknown" until
+    # either the first real strike or the 60s force-republish cycle.
+    publisher = FakePublisher()
+    wiring = LightningWiring(_config(), publisher, clock=FakeClock())
+
+    wiring.tick(available=True)
+
+    assert publisher.last_state("strikes") == (
+        0,
+        {"geojson": {"type": "FeatureCollection", "features": []}},
+    )
+
+
+def test_on_strike_alone_does_not_publish_strikes_geojson() -> None:
+    # The geojson publish is throttled to <=1/sec by only happening from
+    # tick() -- on_strike (paho's own network thread) must never publish it
+    # directly, however many strikes arrive between ticks.
+    clock = FakeClock()
+    publisher = FakePublisher()
+    wiring = LightningWiring(_config(), publisher, clock=clock)
+
+    wiring.on_strike(8.0, 225.0, 0.0, 34.1, -84.1)
+
+    assert publisher.last_state("strikes") is None
+
+
+def test_strikes_geojson_drops_features_once_pruned_by_a_later_tick() -> None:
+    clock = FakeClock()
+    publisher = FakePublisher()
+    wiring = LightningWiring(_config(strike_map_window_minutes=1), publisher, clock=clock)
+
+    wiring.on_strike(8.0, 225.0, 0.0, 34.1, -84.1)
+    wiring.tick(available=True)
+    value, attrs = publisher.last_state("strikes")
+    assert value == 1
+    assert len(attrs["geojson"]["features"]) == 1
+
+    clock.advance(61)  # past the 1-minute strike-map window
+    wiring.tick(available=True)
+
+    value, attrs = publisher.last_state("strikes")
+    assert value == 0
+    assert attrs["geojson"]["features"] == []
 
 
 # --- unit conversion at publish -----------------------------------------------
@@ -259,7 +339,7 @@ def test_nearest_strike_distance_converts_km_to_miles_rounded_1dp_when_imperial(
     publisher = FakePublisher()
     wiring = LightningWiring(_config(units="imperial"), publisher, clock=FakeClock())
 
-    wiring.on_strike(8.0, 90.0, 0.0)
+    wiring.on_strike(8.0, 90.0, 0.0, 34.1, -84.1)
 
     assert publisher.last_state("nearest_strike_distance") == (5.0, None)
 
@@ -268,7 +348,7 @@ def test_nearest_strike_distance_stays_km_when_metric() -> None:
     publisher = FakePublisher()
     wiring = LightningWiring(_config(units="metric"), publisher, clock=FakeClock())
 
-    wiring.on_strike(8.0, 90.0, 0.0)
+    wiring.on_strike(8.0, 90.0, 0.0, 34.1, -84.1)
 
     assert publisher.last_state("nearest_strike_distance") == (8.0, None)
 
@@ -277,7 +357,7 @@ def test_nearest_strike_bearing_publishes_compass_string_with_degrees_attr() -> 
     publisher = FakePublisher()
     wiring = LightningWiring(_config(), publisher, clock=FakeClock())
 
-    wiring.on_strike(8.0, 225.0, 0.0)
+    wiring.on_strike(8.0, 225.0, 0.0, 34.1, -84.1)
 
     assert publisher.last_state("nearest_strike_bearing") == ("SW", {"degrees": 225.0})
 
@@ -302,7 +382,7 @@ def test_all_clear_at_publishes_iso_string_roughly_all_clear_minutes_ahead() -> 
     publisher = FakePublisher()
     wiring = LightningWiring(_config(), publisher, clock=FakeClock())
 
-    wiring.on_strike(8.0, 90.0, 0.0)
+    wiring.on_strike(8.0, 90.0, 0.0, 34.1, -84.1)
 
     value, _ = publisher.last_state("all_clear_at")
     assert isinstance(value, str) and value != ""
@@ -320,7 +400,7 @@ def test_all_clear_at_publishes_none_string_after_all_clear_event() -> None:
     clock = FakeClock()
     publisher = FakePublisher()
     wiring = LightningWiring(_config(all_clear_minutes=ALL_CLEAR_MINUTES), publisher, clock=clock)
-    wiring.on_strike(8.0, 90.0, 0.0)
+    wiring.on_strike(8.0, 90.0, 0.0, 34.1, -84.1)
 
     clock.advance(ALL_CLEAR_SECONDS)
     wiring.tick(available=True)
@@ -346,7 +426,7 @@ def test_feed_lost_while_closed_freezes_timer_no_all_clear_across_full_window(
     clock = FakeClock()
     publisher = FakePublisher()
     wiring = LightningWiring(_config(), publisher, clock=clock)
-    wiring.on_strike(8.0, 225.0, 0.0)  # CLOSED, deadline = ALL_CLEAR_SECONDS
+    wiring.on_strike(8.0, 225.0, 0.0, 34.1, -84.1)  # CLOSED, deadline = ALL_CLEAR_SECONDS
     assert wiring._state.state == "CLOSED"
 
     with caplog.at_level(logging.WARNING):
@@ -373,7 +453,7 @@ def test_feed_restored_after_loss_requires_a_full_fresh_window_before_all_clear(
     clock = FakeClock()
     publisher = FakePublisher()
     wiring = LightningWiring(_config(), publisher, clock=clock)
-    wiring.on_strike(8.0, 225.0, 0.0)  # CLOSED, deadline = ALL_CLEAR_SECONDS
+    wiring.on_strike(8.0, 225.0, 0.0, 34.1, -84.1)  # CLOSED, deadline = ALL_CLEAR_SECONDS
 
     clock.advance(ALL_CLEAR_SECONDS - 5)  # nearly expired
     wiring.tick(available=False)  # feed drops, timer frozen with ~5s left
@@ -401,7 +481,7 @@ def test_feed_restored_after_loss_logs_restart_with_state(caplog) -> None:
     clock = FakeClock()
     publisher = FakePublisher()
     wiring = LightningWiring(_config(), publisher, clock=clock)
-    wiring.on_strike(30.0, 90.0, 0.0)  # WATCH
+    wiring.on_strike(30.0, 90.0, 0.0, 34.1, -84.1)  # WATCH
     wiring.tick(available=False)
 
     with caplog.at_level(logging.INFO):
@@ -441,7 +521,7 @@ def test_strike_while_unavailable_still_processed_via_on_strike() -> None:
     wiring = LightningWiring(_config(), publisher, clock=clock)
 
     wiring.tick(available=False)
-    wiring.on_strike(8.0, 225.0, 0.0)
+    wiring.on_strike(8.0, 225.0, 0.0, 34.1, -84.1)
 
     assert wiring._state.state == "CLOSED"
     assert publisher.last_state("swim_status") == ("CLOSED", None)
@@ -478,6 +558,7 @@ def test_lightning_entities_cover_the_c_milestone_entity_map() -> None:
         "all_clear_at",
         "lightning_nearby",
         "lightning_available",
+        "strikes",
     }
     by_key = {entity.key: entity for entity in entities}
     assert by_key["nearest_strike_distance"].unit == "mi"
@@ -487,6 +568,10 @@ def test_lightning_entities_cover_the_c_milestone_entity_map() -> None:
     assert by_key["lightning_nearby"].device_class == "safety"
     assert by_key["lightning_available"].device_class == "connectivity"
     assert by_key["lightning_available"].entity_category == "diagnostic"
+    assert by_key["strikes"].component == "sensor"
+    assert by_key["strikes"].state_class == "measurement"
+    assert by_key["strikes"].icon == "mdi:flash"
+    assert by_key["strikes"].value_is_json_attr is True
 
 
 def test_lightning_entities_use_km_unit_when_metric() -> None:
@@ -647,7 +732,7 @@ def test_status_includes_lightning_source_and_swim_status_when_active() -> None:
         publisher=FakePublisher(connected=True),
         blitzortung_client=client,
     )
-    supervisor._lightning.on_strike(8.0, 90.0, 0.0)
+    supervisor._lightning.on_strike(8.0, 90.0, 0.0, 34.1, -84.1)
 
     status = supervisor._status()
 
@@ -811,6 +896,6 @@ def test_make_blitzortung_client_defers_supervisor_lookup_until_a_strike_arrives
 
     client = _make_blitzortung_client(config, supervisor)
     # Constructing the client must not have touched supervisor internals yet.
-    client._on_strike(8.0, 90.0, 0.0)  # simulate what BlitzortungClient would call
+    client._on_strike(8.0, 90.0, 0.0, 34.1, -84.1)  # simulate what BlitzortungClient would call
 
     assert supervisor._lightning.state == "CLOSED"

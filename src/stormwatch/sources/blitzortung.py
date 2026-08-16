@@ -38,7 +38,7 @@ class BlitzortungClient:
     def __init__(
         self,
         config: Config,
-        on_strike: Callable[[float, float, float], None],
+        on_strike: Callable[[float, float, float, float, float], None],
         client: Any | None = None,
     ) -> None:
         self._config = config
@@ -131,7 +131,7 @@ class BlitzortungClient:
         distance_km, bearing_deg = distance_and_bearing(
             self._config.latitude, self._config.longitude, lat, lon
         )
-        self._on_strike(distance_km, bearing_deg, age_s)
+        self._on_strike(distance_km, bearing_deg, age_s, lat, lon)
 
     @staticmethod
     def _age_seconds(raw_time_ns: Any) -> float:

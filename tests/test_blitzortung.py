@@ -78,13 +78,15 @@ def fake_client() -> FakeMqttClient:
 
 
 class _Recorder:
-    """Records on_strike(distance_km, bearing_deg, age_s) calls."""
+    """Records on_strike(distance_km, bearing_deg, age_s, lat, lon) calls."""
 
     def __init__(self) -> None:
-        self.calls: list[tuple[float, float, float]] = []
+        self.calls: list[tuple[float, float, float, float, float]] = []
 
-    def __call__(self, distance_km: float, bearing_deg: float, age_s: float) -> None:
-        self.calls.append((distance_km, bearing_deg, age_s))
+    def __call__(
+        self, distance_km: float, bearing_deg: float, age_s: float, lat: float, lon: float
+    ) -> None:
+        self.calls.append((distance_km, bearing_deg, age_s, lat, lon))
 
 
 def _connect(fake_client: FakeMqttClient, client: BlitzortungClient) -> None:
@@ -184,13 +186,15 @@ def test_on_message_valid_strike_calls_on_strike_with_correct_distance_and_beari
     fake_client.on_message(fake_client, None, FakeMqttMessage(payload))
 
     assert len(recorder.calls) == 1
-    distance_km, bearing_deg, age_s = recorder.calls[0]
+    distance_km, bearing_deg, age_s, lat, lon = recorder.calls[0]
     expected_distance, expected_bearing = distance_and_bearing(
         config.latitude, config.longitude, strike_lat, strike_lon
     )
     assert distance_km == pytest.approx(expected_distance)
     assert bearing_deg == pytest.approx(expected_bearing)
     assert age_s == pytest.approx(100.0, abs=1e-6)
+    assert lat == pytest.approx(strike_lat)
+    assert lon == pytest.approx(strike_lon)
 
 
 def test_on_message_missing_time_defaults_age_to_zero(config, fake_client) -> None:
