@@ -1,0 +1,27 @@
+# StormWatch lightning strike map card
+#
+# Requires the community nathan-gs/ha-map-card (custom:map-card) -- see
+# docs/HOME-ASSISTANT.md#lightning-strike-map for install instructions
+# (HACS or manual). Paste this into a Lovelace view in YAML mode, or the
+# raw card editor of a manually-configured dashboard.
+#
+# Strikes render from sensor.stormwatch_strikes's geojson attribute (a
+# GeoJSON FeatureCollection, refreshed every tick -- see DESIGN.md §6/§8).
+# The two rings are zone.home circle overlays at CLOSE_RADIUS/WATCH_RADIUS.
+
+type: custom:map-card
+x: 34.0241        # home latitude — set to yours
+y: -84.6096       # home longitude — set to yours
+zoom: 10
+card_size: 8
+entities:
+  - entity: sensor.stormwatch_strikes
+    geojson:
+      attribute: geojson
+      color: '#ffcc00'
+  - entity: zone.home
+    display: marker
+    label: Home
+    circle: { source: config, radius: 16093, color: '#ff3333', fill_opacity: 0.05 }   # 10 mi no-swim ring
+  - entity: zone.home
+    circle: { source: config, radius: 40233, color: '#ffaa33', fill_opacity: 0.03 }   # 25 mi watch ring

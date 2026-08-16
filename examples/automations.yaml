@@ -79,6 +79,52 @@
                     sound: null
       default: []
 
+- id: stormwatch_tornado_strobe
+  alias: StormWatch - Tornado Warning Lamp Strobe
+  description: >-
+    Strobes a lamp on/off for ~5s when StormWatch publishes a Tornado Warning
+    (stormwatch/event/alert_issued, event == "Tornado Warning"), to physically
+    wake a sleeper. Plain-YAML equivalent of the tornado-strobe blueprint.
+    Fires ONLY on an exact Tornado Warning — other critical alerts
+    (lightning-close, Flash Flood Emergency, Extreme Wind) still notify but
+    never touch the lamp. Independent of the notification automations by
+    design: testable/disableable on its own, and it can never break the
+    critical push path. Ends ON at full brightness so the room stays lit.
+    No device/ESP firmware changes are needed — HA drives the whole pattern.
+  mode: restart  # a re-issued warning restarts the strobe rather than queuing
+  trigger:
+    - platform: mqtt
+      topic: stormwatch/event/alert_issued
+  condition:
+    - condition: template
+      value_template: "{{ trigger.payload_json.event == 'Tornado Warning' }}"
+  action:
+    - repeat:
+        count: 8  # 8 × (300ms on + 300ms off) ≈ 4.8s
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: light.smart_lamp_1  # <-- your nightstand lamp; verify the real entity_id in Developer Tools > States
+            data:
+              brightness_pct: 100
+              transition: 0  # hard on/off; a fading bulb turns a strobe to mush
+          - delay:
+              milliseconds: 300
+          - service: light.turn_off
+            target:
+              entity_id: light.smart_lamp_1  # <-- same lamp
+            data:
+              transition: 0
+          - delay:
+              milliseconds: 300
+    # End ON at full brightness so the room stays lit while you get to shelter.
+    - service: light.turn_on
+      target:
+        entity_id: light.smart_lamp_1  # <-- same lamp
+      data:
+        brightness_pct: 100
+        transition: 0
+
 - id: stormwatch_pool_closed
   alias: StormWatch - Pool Closed (Lightning Nearby)
   description: >-

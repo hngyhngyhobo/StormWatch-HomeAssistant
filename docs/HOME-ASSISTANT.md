@@ -61,8 +61,9 @@ Xweather call tracking — is **planned for Phase 4 (Xweather)** and does not ex
 | `sensor.stormwatch_rain_last_24h` | rain amount (`in`/`mm`) | Observed rainfall in the trailing 24 hours; hourly breakdown in attributes |
 | `sensor.stormwatch_rain_last_7d` | rain amount (`in`/`mm`) | Observed rainfall in the trailing 7 days |
 | `binary_sensor.stormwatch_rain_available` | binary (`connectivity`, diagnostic) | On when the NWS rainfall data source is reachable |
+| `sensor.stormwatch_strikes` | count | Count of recent lightning strikes (last `STRIKE_MAP_WINDOW_MINUTES`); a GeoJSON `FeatureCollection` of strike points (distance/bearing/age/range per point) is in the `geojson` attribute — see [Lightning strike map](#lightning-strike-map) below |
 
-The lightning/pool entities (rows 7-13) only appear when `BLITZORTUNG_ENABLED` is true (the
+The lightning/pool entities (rows 7-13, plus `sensor.stormwatch_strikes`) only appear when `BLITZORTUNG_ENABLED` is true (the
 default), and the rainfall entities (last five rows) only appear when `RAIN_ENABLED` is true (also
 the default, US locations only) — see [CONFIGURATION.md](CONFIGURATION.md#advanced).
 
@@ -123,6 +124,83 @@ for the pool/swim notification pair: it fires when StormWatch closes the pool
      notification is **always** a normal, silent push, with no toggle to change that (§8
      notification discipline: an all-clear should never wake anyone up).
 6. Save.
+
+## Importing the tornado warning lamp strobe blueprint
+
+The repo also ships
+[examples/blueprints/stormwatch_tornado_strobe.yaml](../examples/blueprints/stormwatch_tornado_strobe.yaml),
+which flashes a lamp on and off when StormWatch publishes a **Tornado Warning** — a bedside lamp
+strobing at 3 a.m. wakes you when a silent banner won't. It's a companion to the critical push, not
+a replacement: run it alongside the Severe Weather Alerts blueprint, which still delivers the iOS
+critical-alert sound.
+
+This is entirely a Home Assistant automation — it drives any HA `light` entity (Zigbee, Wi-Fi,
+ESPHome) through a normal on/off loop, so **no device or ESPHome firmware changes are needed.**
+It fires **only** on an exact NWS `Tornado Warning`; other `critical` alerts (lightning inside
+`CLOSE_RADIUS`, Flash Flood Emergency, Extreme Wind Warning) still notify but never touch the lamp.
+
+1. Home Assistant → Settings → Automations & Scenes → **Blueprints** tab → **Import Blueprint**.
+2. Paste the raw GitHub URL:
+
+   ```
+   https://raw.githubusercontent.com/hngyhngyhobo/WeatherAlert-HomeAssistant/main/examples/blueprints/stormwatch_tornado_strobe.yaml
+   ```
+
+3. Click **Preview** → **Import Blueprint**.
+4. Go to the **Automations** tab → **Create Automation** → **Use Blueprint** → **StormWatch —
+   Tornado Warning Lamp Strobe**.
+5. Fill in the inputs:
+   - **Strobe Light** — the lamp to flash (e.g. your nightstand lamp).
+   - **Flash Count** / **Flash Interval (ms)** — how many on/off cycles and how long each half stays
+     on/off. Total strobe time ≈ Flash Count × 2 × Flash Interval; the defaults (8 × 300 ms) give
+     roughly a 5-second strobe.
+   - **Strobe Brightness** — brightness of each ON flash (default 100%).
+   - **Leave Lamp On After Strobe** — on by default, so the lamp ends up lit and the room stays
+     bright while you move to shelter; turn it off to leave the lamp off afterward.
+6. Save.
+
+> **`transition: 0`.** The strobe forces a hard on/off with no fade. Many bulbs fade between states
+> by default, which would smear the strobe into a slow pulse. If your bulb ignores `transition`, the
+> automation still works — the edges are just softer.
+
+Prefer editing YAML directly? The same automation is in
+[examples/automations.yaml](../examples/automations.yaml) as `stormwatch_tornado_strobe` — replace
+the `light.smart_lamp_1` placeholder with your lamp's real entity ID (find it under Developer Tools
+→ States).
+
+## Lightning strike map
+
+`sensor.stormwatch_strikes`'s `geojson` attribute (a GeoJSON `FeatureCollection` of recent strike
+points, each with `distance`/`bearing`/`bearing_deg`/`age_seconds`/`range` properties) can be
+rendered on an actual map card via the community
+[`nathan-gs/ha-map-card`](https://github.com/nathan-gs/ha-map-card) (`custom:map-card`) — not a
+built-in Home Assistant card, so it needs installing first.
+
+### Install the card
+
+Via HACS (recommended):
+
+1. HACS → **Frontend** → search **Map card** (`nathan-gs/ha-map-card`) → **Download**.
+2. Reload the Home Assistant frontend (or restart) so the new card registers.
+
+Without HACS, manually:
+
+1. Download the card's `dist/ha-map-card.js` from its
+   [GitHub releases](https://github.com/nathan-gs/ha-map-card/releases) into `/config/www/`.
+2. Home Assistant → Settings → Dashboards → **Resources** (top-right ⋮ menu) → **Add Resource** →
+   URL `/local/ha-map-card.js`, Resource type **JavaScript module**.
+
+### Add the card
+
+Paste [examples/lightning-map-card.yaml](../examples/lightning-map-card.yaml) into a dashboard view
+(YAML mode, or the raw card editor), setting `x`/`y` to your own home latitude/longitude. Strikes
+render as points from `sensor.stormwatch_strikes`'s `geojson` attribute; the two rings are
+`zone.home` `circle` overlays at `CLOSE_RADIUS` and `WATCH_RADIUS` (10 mi / 25 mi by default —
+adjust the `radius` values, in meters, if you've changed those or use `UNITS=metric`). The map
+window of strike history shown is controlled by `STRIKE_MAP_WINDOW_MINUTES` (default 30 minutes —
+see [CONFIGURATION.md](CONFIGURATION.md#advanced)).
+
+<!-- screenshot: lightning strike map card with close/watch rings -->
 
 ## iOS critical alerts
 

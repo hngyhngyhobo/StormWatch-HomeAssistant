@@ -64,3 +64,24 @@ cards:
           name: Nearest Strike Distance
         - entity: sensor.stormwatch_all_clear_at
           name: All Clear At
+
+  # Lightning strike map -- requires the community nathan-gs/ha-map-card
+  # (custom:map-card); see docs/HOME-ASSISTANT.md#lightning-strike-map and
+  # examples/lightning-map-card.yaml for install instructions and a
+  # standalone copy of this card.
+  - type: custom:map-card
+    x: 34.0241        # home latitude — set to yours
+    y: -84.6096       # home longitude — set to yours
+    zoom: 10
+    card_size: 8
+    entities:
+      - entity: sensor.stormwatch_strikes
+        geojson:
+          attribute: geojson
+          color: '#ffcc00'
+      - entity: zone.home
+        display: marker
+        label: Home
+        circle: { source: config, radius: 16093, color: '#ff3333', fill_opacity: 0.05 }   # 10 mi no-swim ring
+      - entity: zone.home
+        circle: { source: config, radius: 40233, color: '#ffaa33', fill_opacity: 0.03 }   # 25 mi watch ring

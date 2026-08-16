@@ -52,7 +52,10 @@ service deciding anything for you.
    [severe alerts blueprint](examples/blueprints/stormwatch_severe_alerts.yaml) to route alerts to
    notifications, including the critical iOS alert payload, and the
    [pool alerts blueprint](examples/blueprints/stormwatch_pool_alerts.yaml) to get notified when
-   the pool closes for lightning and when it's safe to get back in.
+   the pool closes for lightning and when it's safe to get back in. Want a Tornado Warning to
+   physically wake you? Import the
+   [tornado strobe blueprint](examples/blueprints/stormwatch_tornado_strobe.yaml) to flash a
+   bedside lamp — no device firmware changes needed.
 
 Full walkthrough, screenshots, and field-by-field explanations:
 [docs/INSTALL-UNRAID.md](docs/INSTALL-UNRAID.md).
@@ -81,8 +84,9 @@ Published via MQTT discovery under a single device, `StormWatch`.
 | `sensor.stormwatch_rain_last_24h` | rain amount (`in`/`mm`) | Observed rainfall in the trailing 24 hours; hourly breakdown in attributes |
 | `sensor.stormwatch_rain_last_7d` | rain amount (`in`/`mm`) | Observed rainfall in the trailing 7 days |
 | `binary_sensor.stormwatch_rain_available` | binary (`connectivity`, diagnostic) | On when the NWS rainfall data source is reachable |
+| `sensor.stormwatch_strikes` | count | Count of recent lightning strikes (last `STRIKE_MAP_WINDOW_MINUTES`); a GeoJSON `FeatureCollection` of strike points (distance/bearing/age/range per point) is in the `geojson` attribute, for rendering on a map card — see [docs/HOME-ASSISTANT.md](docs/HOME-ASSISTANT.md#lightning-strike-map) |
 
-The lightning/pool entities (rows 7-13) only appear when `BLITZORTUNG_ENABLED` is true (the
+The lightning/pool entities (rows 7-13, plus `sensor.stormwatch_strikes`) only appear when `BLITZORTUNG_ENABLED` is true (the
 default), and the rainfall entities (last five rows) only appear when `RAIN_ENABLED` is true (also
 the default, US locations only) — see [docs/CONFIGURATION.md](docs/CONFIGURATION.md#advanced).
 

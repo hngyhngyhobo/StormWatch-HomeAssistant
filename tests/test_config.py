@@ -59,6 +59,7 @@ def test_minimal_valid_env_defaults() -> None:
     assert config.discovery_prefix == "homeassistant"
     assert config.device_name == "StormWatch"
     assert config.config_dir == "/config"
+    assert config.strike_map_window_minutes == 30
 
 
 def test_default_radii_convert_miles_to_km() -> None:
@@ -218,6 +219,18 @@ def test_mqtt_username_and_password_passthrough() -> None:
 
     assert config.mqtt_username == "stormwatch"
     assert config.mqtt_password == "hunter2"
+
+
+def test_strike_map_window_minutes_override() -> None:
+    config = load_config(_base_env(STRIKE_MAP_WINDOW_MINUTES="45"))
+
+    assert config.strike_map_window_minutes == 45
+
+
+def test_strike_map_window_minutes_floored_at_1() -> None:
+    config = load_config(_base_env(STRIKE_MAP_WINDOW_MINUTES="0"))
+
+    assert config.strike_map_window_minutes == 1
 
 
 def test_config_is_frozen() -> None:
