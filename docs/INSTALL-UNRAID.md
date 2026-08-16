@@ -28,7 +28,7 @@ Apps for StormWatch" shortcut — this is the pre-CA path.
 3. At the top of the Add Container form, find the **Template** field. Paste in the template URL:
 
    ```
-   https://raw.githubusercontent.com/hngyhngyhobo/WeatherAlert-HomeAssistant/main/unraid/stormwatch.xml
+   https://raw.githubusercontent.com/hngyhngyhobo/StormWatch-HomeAssistant/main/unraid/stormwatch.xml
    ```
 
    Unraid fetches the XML and pre-fills the rest of the form — repository, icon, category, ports,

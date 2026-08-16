@@ -83,7 +83,7 @@ The repo ships an importable blueprint that wires `sensor` state into real notif
 2. Paste the raw GitHub URL:
 
    ```
-   https://raw.githubusercontent.com/hngyhngyhobo/WeatherAlert-HomeAssistant/main/examples/blueprints/stormwatch_severe_alerts.yaml
+   https://raw.githubusercontent.com/hngyhngyhobo/StormWatch-HomeAssistant/main/examples/blueprints/stormwatch_severe_alerts.yaml
    ```
 
 3. Click **Preview** → **Import Blueprint**.
@@ -110,7 +110,7 @@ for the pool/swim notification pair: it fires when StormWatch closes the pool
 2. Paste the raw GitHub URL:
 
    ```
-   https://raw.githubusercontent.com/hngyhngyhobo/WeatherAlert-HomeAssistant/main/examples/blueprints/stormwatch_pool_alerts.yaml
+   https://raw.githubusercontent.com/hngyhngyhobo/StormWatch-HomeAssistant/main/examples/blueprints/stormwatch_pool_alerts.yaml
    ```
 
 3. Click **Preview** → **Import Blueprint**.
@@ -143,7 +143,7 @@ It fires **only** on an exact NWS `Tornado Warning`; other `critical` alerts (li
 2. Paste the raw GitHub URL:
 
    ```
-   https://raw.githubusercontent.com/hngyhngyhobo/WeatherAlert-HomeAssistant/main/examples/blueprints/stormwatch_tornado_strobe.yaml
+   https://raw.githubusercontent.com/hngyhngyhobo/StormWatch-HomeAssistant/main/examples/blueprints/stormwatch_tornado_strobe.yaml
    ```
 
 3. Click **Preview** → **Import Blueprint**.

@@ -105,7 +105,7 @@ def test_sends_exact_user_agent_header() -> None:
 
     expected = (
         f"StormWatch/{__version__} "
-        "(https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant, you@example.com)"
+        "(https://github.com/hngyhngyhobo/StormWatch-HomeAssistant, you@example.com)"
     )
     assert session.calls[0]["headers"]["User-Agent"] == expected
 

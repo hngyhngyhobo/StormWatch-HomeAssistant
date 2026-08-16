@@ -6,11 +6,11 @@
   <Network>bridge</Network>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
-  <Support>https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant/issues</Support>
-  <Project>https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant</Project>
+  <Support>https://github.com/hngyhngyhobo/StormWatch-HomeAssistant/issues</Support>
+  <Project>https://github.com/hngyhngyhobo/StormWatch-HomeAssistant</Project>
   <Overview>Lightning proximity and NWS severe weather alerts as Home Assistant entities via MQTT auto-discovery. Free data sources by default; no accounts, no API keys. NOT a life-safety system.</Overview>
   <Category>HomeAutomation Tools:</Category>
-  <Icon>https://raw.githubusercontent.com/hngyhngyhobo/WeatherAlert-HomeAssistant/main/unraid/icon.png</Icon>
+  <Icon>https://raw.githubusercontent.com/hngyhngyhobo/StormWatch-HomeAssistant/main/unraid/icon.png</Icon>
   <ExtraParams/>
   <WebUI>http://[IP]:[PORT:8099]/healthz</WebUI>
   <Config Name="MQTT Host" Target="MQTT_HOST" Default="" Mode="" Description="Your Mosquitto broker. Required." Type="Variable" Display="always" Required="true" Mask="false"/>

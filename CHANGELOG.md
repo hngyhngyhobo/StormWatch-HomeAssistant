@@ -7,6 +7,6 @@ All notable changes are documented here. Format: [Keep a Changelog](https://keep
 
 ### Features
 
-* StormWatch v0.1.0 — NWS alerts, lightning proximity, rainfall ([188b16b](https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant/commit/188b16b455d6f803fa8d69879b26bc9ba078d097))
+* StormWatch v0.1.0 — NWS alerts, lightning proximity, rainfall ([188b16b](https://github.com/hngyhngyhobo/StormWatch-HomeAssistant/commit/188b16b455d6f803fa8d69879b26bc9ba078d097))
 
 ## [Unreleased]

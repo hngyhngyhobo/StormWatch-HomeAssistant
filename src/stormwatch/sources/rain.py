@@ -35,7 +35,7 @@ from stormwatch.config import Config
 logger = logging.getLogger("stormwatch.sources.rain")
 
 _REQUEST_TIMEOUT_SECONDS = 10
-_REPO_URL = "https://github.com/hngyhngyhobo/WeatherAlert-HomeAssistant"
+_REPO_URL = "https://github.com/hngyhngyhobo/StormWatch-HomeAssistant"
 _OBSERVATIONS_LIMIT = 48
 _STORE_RETENTION_DAYS = 7
 
