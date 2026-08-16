@@ -83,6 +83,60 @@ Every other field (MQTT port/credentials, units, alert thresholds, advanced sett
 Xweather section) has a working default — full reference in
 [CONFIGURATION.md](CONFIGURATION.md).
 
+## Customizing the defaults
+
+Everything below is optional — StormWatch works out of the box once the two required fields above
+are set. These are the settings a friend deploying this for the first time is most likely to want
+to tweak. (Your location has its own section just above —
+[Setting your location](#setting-your-location-optional-but-recommended).)
+
+| Field (template label) | Env var | Default | What it does |
+|---|---|---|---|
+| **Units** | `UNITS` | `imperial` | `imperial` or `metric` — miles vs. km, °F vs. °C, and the units the two radii below are measured in. |
+| **Close Radius** | `CLOSE_RADIUS` | `10` | The **pool-closed ring**. A lightning strike inside this distance (in `UNITS`) closes the pool — "get out of the water." |
+| **Watch Radius** | `WATCH_RADIUS` | `25` | The **heads-up ring**. A strike inside this distance but outside Close Radius is a warning to keep an eye on the sky; the pool stays open. |
+| **All Clear Minutes** | `ALL_CLEAR_MINUTES` | `30` | Minutes with no qualifying strikes before StormWatch calls the all-clear. |
+| **Quiet Hours** | `QUIET_HOURS` | `22:00-07:00` | The window during which alert rules flagged `quiet_hours: true` stay silent. |
+| **Strike Map Window Minutes** | `STRIKE_MAP_WINDOW_MINUTES` | `30` | How many minutes of lightning history show up on the strike map / `sensor.stormwatch_strikes`. |
+
+Like the two required fields, these live on the container's **Edit** screen in Unraid — change a
+value and click **Apply**. Unraid recreates the container with the new value; your `/config` volume
+and saved state are untouched. Everything not listed here (including the Xweather and advanced
+sections) also has a working default — full reference in [CONFIGURATION.md](CONFIGURATION.md).
+
+### Choosing which alerts notify you
+
+StormWatch sorts every NWS alert into one of three tiers:
+
+- **Critical** — breaks through Do Not Disturb on your phone (the iOS critical-alert push).
+  Reserved for "must never be missed," e.g. a Tornado Warning.
+- **High** — a normal push notification with an audible sound. Does not break Do Not Disturb.
+- **Normal** — silent. Still visible in Home Assistant, just no sound and no interruption.
+
+StormWatch's job is only to classify each alert into one of these three tiers and publish it — what
+actually becomes a phone notification is decided by the Home Assistant automation you set up (the
+severe-alerts blueprint covered in [HOME-ASSISTANT.md](HOME-ASSISTANT.md) is the easiest way).
+
+Three template fields hold the tiers, as comma-separated exact NWS event names:
+
+| Field | Default |
+|---|---|
+| **Alerts Critical** | `Tornado Warning,Flash Flood Emergency` |
+| **Alerts High** | `Severe Thunderstorm Warning,Flash Flood Warning` |
+| **Alerts Normal** | `Tornado Watch,Severe Thunderstorm Watch` |
+
+To add an event, type its exact NWS event name into the matching field (comma-separated if the
+field already has entries) and click **Apply**.
+
+Want more — regex matching, severity/urgency/certainty filters, per-rule quiet hours, or disabling
+a rule entirely? That all lives in `/config/alerts.yaml`, which StormWatch auto-generates on first
+run with a broad default (winter weather is already covered out of the box: Winter Storm/Ice Storm/
+Blizzard Warning → high, Freeze/Frost → normal). Full details in **[ALERT-RULES.md](ALERT-RULES.md)**.
+
+One difference to keep in mind: edits to `/config/alerts.yaml` hot-reload automatically — no restart
+needed. Changes to Unraid template fields, like the three above, need **Apply**, which recreates the
+container (your `/config` volume, including `alerts.yaml` itself, is untouched either way).
+
 ## Verify
 
 After clicking Apply, Unraid pulls the image and starts the container.
@@ -92,7 +146,7 @@ After clicking Apply, Unraid pulls the image and starts the container.
 
    ```
    INFO stormwatch: Location 'Asheville, NC' resolved to 35.5951, -82.5515 (geocoded)
-   INFO stormwatch: StormWatch 1.0.0 starting
+   INFO stormwatch: StormWatch 0.2.0 starting
    INFO stormwatch.sources.nws: NWS poller started (contact: you@example.com, poll interval 60s)
    INFO stormwatch.sources.blitzortung: Blitzortung client started (9 cells, host blitzortung.ha.sed.pl)
    INFO stormwatch.publisher: Connected to MQTT broker 192.168.1.10:1883
@@ -126,15 +180,17 @@ The template also exposes a WebUI button pointed at the container's `:8099/healt
   and shows an **"update ready"** badge automatically once a new image is published under that tag
   — no manual digest checking. Click the badge (or the container icon → **Update**) to pull and
   recreate the container with the new image. Your `/config` volume and settings are untouched.
-- **Pin the major tag.** Images are published as `:latest`, `:1`, `:1.2`, `:1.2.3`. Set the
-  **Repository** field to `ghcr.io/hngyhngyhobo/stormwatch:1` (or whatever the current major is)
-  rather than `:latest` — you get bug fixes and non-breaking improvements without an unannounced
-  major version jump. See [CHANGELOG.md](../CHANGELOG.md) for what changed in each release.
+- **Pin the minor tag while StormWatch is on 0.x.** Images are published as `:latest`, `:0.2.0`,
+  `:0.2`, `:0`. Set the **Repository** field to `ghcr.io/hngyhngyhobo/stormwatch:0.2` (or whatever
+  the current minor is) rather than `:latest` or the bare `:0` — pre-1.0, a 0.x *minor* bump (e.g.
+  0.2 → 0.3) can still include breaking changes, not just bug fixes, so pinning the minor is the
+  safer default until StormWatch reaches 1.0. See [CHANGELOG.md](../CHANGELOG.md) for what changed
+  in each release.
 - **CA Auto Update plugin (opt-in).** If you run the **CA Auto Update Applications** plugin, you can
   add StormWatch to its schedule so updates apply automatically instead of waiting for you to click
   "update ready." This is optional — given StormWatch is safety-adjacent, some users prefer to
   review the changelog before every update rather than auto-apply. Either is a reasonable choice;
-  pinning the major tag keeps auto-updates to non-breaking changes either way.
+  pinning the minor tag keeps auto-updates to same-minor patch releases either way.
 
 ## Rollback
 
@@ -142,7 +198,7 @@ If an update causes a problem, pin back to the previous version tag:
 
 1. Docker tab → click the StormWatch icon → **Edit**.
 2. Change the **Repository** field from your current tag to the last known-good one, e.g.
-   `ghcr.io/hngyhngyhobo/stormwatch:1.2.2`.
+   `ghcr.io/hngyhngyhobo/stormwatch:0.1.0`.
 3. Click **Apply**. Unraid pulls that specific tag and recreates the container on it.
 4. Once you're ready to move forward again, edit the Repository field back to your normal pinned
    tag (or `:latest`) and Apply again.
