@@ -1,160 +1,196 @@
-# StormWatch dashboard card
+# StormWatch dashboard -- a complete, ready-to-paste Home Assistant dashboard.
 #
-# Add this to a Lovelace view in YAML mode, or paste it into the raw
-# card editor of a manually-configured dashboard.
+# Install (no file editing, about two minutes):
+#   1. Settings > Dashboards > + Add dashboard > "New dashboard from scratch".
+#      Title: StormWatch, icon: mdi:weather-lightning, Show in sidebar: on > Create.
+#   2. Open the new dashboard > pencil (Edit dashboard) > three-dot menu >
+#      "Raw configuration editor".
+#   3. Replace everything in the editor with this whole file > Save > Done.
+# Full walkthrough: docs/HOME-ASSISTANT.md#stormwatch-dashboard
 #
-# Includes the lightning/pool row group (swim status, nearest-strike
-# distance/bearing, strike count, all-clear countdown) — see DESIGN.md §8
-# for the full entity map. These only populate once BLITZORTUNG_ENABLED is
-# true (the default) — see docs/HOME-ASSISTANT.md.
+# Cards: weather alerts, a critical-alert banner, alert levels (dropdowns that
+# change what reaches the phones), pool/lightning, watering, rain, and source
+# health. Every entity is created by StormWatch through MQTT discovery; a
+# feature you turned off (e.g. BLITZORTUNG_ENABLED=false) just shows its
+# rows as unavailable -- delete those cards if you like.
+#
+# The lightning strike map needs a community card and is kept separate:
+# see docs/HOME-ASSISTANT.md#lightning-strike-map.
 
-type: vertical-stack
-cards:
-  - type: entities
-    title: StormWatch
-    entities:
-      - entity: sensor.stormwatch_highest_alert
-        name: Highest Active Alert
-      - entity: sensor.stormwatch_active_alerts
-        name: Active Alerts
-      - entity: binary_sensor.stormwatch_connected
-        name: StormWatch Connected
+title: StormWatch
+views:
+  - title: StormWatch
+    path: stormwatch
+    icon: mdi:weather-lightning
+    badges: []
+    cards:
+      - type: entities
+        title: Weather Alerts
+        state_color: true
+        entities:
+          - entity: sensor.stormwatch_highest_alert
+            name: Highest Active Alert
+          - entity: sensor.stormwatch_active_alerts
+            name: Active Alerts
+          - entity: binary_sensor.stormwatch_connected
+            name: StormWatch Connected
 
-  - type: conditional
-    conditions:
-      - entity: binary_sensor.stormwatch_critical_alert
-        state: "on"
-    card:
-      type: entities
-      title: CRITICAL ALERT ACTIVE
-      state_color: true
-      entities:
-        - entity: binary_sensor.stormwatch_critical_alert
-          name: Critical Alert
-        - entity: sensor.stormwatch_highest_alert
-          name: Alert Details
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.stormwatch_critical_alert
+            state: "on"
+        card:
+          type: markdown
+          content: >
+            # CRITICAL ALERT ACTIVE
 
-  - type: entities
-    title: Pool / Lightning
-    state_color: true
-    entities:
-      - entity: sensor.stormwatch_swim_status
-        name: Swim Status
-      - entity: sensor.stormwatch_nearest_strike_distance
-        name: Nearest Strike Distance
-      - entity: sensor.stormwatch_nearest_strike_bearing
-        name: Nearest Strike Bearing
-      - entity: sensor.stormwatch_strike_count_15m
-        name: Strikes (15 min)
-      - entity: sensor.stormwatch_all_clear_at
-        name: All Clear At
+            **{{ states('sensor.stormwatch_highest_alert') }}** --
+            {{ state_attr('sensor.stormwatch_highest_alert', 'headline') }}
 
-  - type: conditional
-    conditions:
-      - entity: binary_sensor.stormwatch_lightning_nearby
-        state: "on"
-    card:
-      type: entities
-      title: POOL CLOSED — LIGHTNING NEARBY
-      state_color: true
-      entities:
-        - entity: binary_sensor.stormwatch_lightning_nearby
-          name: Lightning Nearby
-        - entity: sensor.stormwatch_nearest_strike_distance
-          name: Nearest Strike Distance
-        - entity: sensor.stormwatch_all_clear_at
-          name: All Clear At
+      # Alert levels: one dropdown per NWS warning/watch (WAKE ME UP / Heads-up /
+      # Silent push / Off). Changes apply immediately and are saved by StormWatch.
+      # These are the common ones; the link at the bottom opens all 66.
+      # See docs/HOME-ASSISTANT.md#change-alert-levels-from-home-assistant.
+      - type: entities
+        title: Alert Levels
+        show_header_toggle: false
+        entities:
+          - type: section
+            label: Tornado & hurricane
+          - entity: select.stormwatch_tornado_warning
+            name: Tornado Warning
+          - entity: select.stormwatch_tornado_watch
+            name: Tornado Watch
+          - entity: select.stormwatch_hurricane_warning
+            name: Hurricane Warning
+          - entity: select.stormwatch_hurricane_watch
+            name: Hurricane Watch
+          - entity: select.stormwatch_tropical_storm_warning
+            name: Tropical Storm Warning
+          - entity: select.stormwatch_tropical_storm_watch
+            name: Tropical Storm Watch
+          - entity: select.stormwatch_extreme_wind_warning
+            name: Extreme Wind Warning
+          - type: section
+            label: Wind & thunderstorms
+          - entity: select.stormwatch_high_wind_warning
+            name: High Wind Warning
+          - entity: select.stormwatch_high_wind_watch
+            name: High Wind Watch
+          - entity: select.stormwatch_severe_thunderstorm_warning
+            name: Severe Thunderstorm Warning
+          - entity: select.stormwatch_severe_thunderstorm_watch
+            name: Severe Thunderstorm Watch
+          - type: section
+            label: Flooding
+          - entity: select.stormwatch_flash_flood_warning
+            name: Flash Flood Warning
+          - entity: select.stormwatch_flash_flood_watch
+            name: Flash Flood Watch
+          - entity: select.stormwatch_flood_warning
+            name: Flood Warning
+          - entity: select.stormwatch_flood_watch
+            name: Flood Watch
+          - type: section
+            label: Winter, cold & heat
+          - entity: select.stormwatch_winter_storm_warning
+            name: Winter Storm Warning
+          - entity: select.stormwatch_winter_storm_watch
+            name: Winter Storm Watch
+          - entity: select.stormwatch_ice_storm_warning
+            name: Ice Storm Warning
+          - entity: select.stormwatch_freeze_warning
+            name: Freeze Warning
+          - entity: select.stormwatch_extreme_cold_warning
+            name: Extreme Cold Warning
+          - entity: select.stormwatch_extreme_heat_warning
+            name: Extreme Heat Warning
+          # Opens the MQTT integration; pick the StormWatch device to see all 66
+          # dropdowns under Configuration.
+          - type: weblink
+            name: All 66 alert types (open the StormWatch device)
+            icon: mdi:format-list-bulleted
+            url: /config/integrations/integration/mqtt
 
-  # Lightning strike map -- requires the community nathan-gs/ha-map-card
-  # (custom:map-card); see docs/HOME-ASSISTANT.md#lightning-strike-map and
-  # examples/lightning-map-card.yaml for install instructions and a
-  # standalone copy of this card. The `wms:` block overlays live NWS rain
-  # radar (free, no key) -- delete it for lightning only.
-  - type: custom:map-card
-    x: 33.7490        # example only (Atlanta, GA) — REQUIRED: set to your home latitude
-    y: -84.3880       # example only — REQUIRED: set to your home longitude
-    zoom: 9
-    card_size: 8
-    wms:
-      - url: https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0q.cgi
-        options:
-          layers: nexrad-n0q-900913
-          format: image/png
-          transparent: true
-    entities:
-      - entity: sensor.stormwatch_lightning_strikes
-        geojson:
-          attribute: geojson
-          color: '#ffee00'
-          weight: 2
-          fill_opacity: 0.9
-          hide_marker: true   # required: the strikes sensor has no location of its own
-      - entity: zone.home
-        circle: { source: config, radius: 16093, color: '#ff3333', fill_opacity: 0.02 }   # 10 mi
-      - entity: zone.home
-        circle: { source: config, radius: 32187, color: '#ff9933', fill_opacity: 0.02 }   # 20 mi
-      - entity: zone.home
-        circle: { source: config, radius: 48280, color: '#ffdd33', fill_opacity: 0.02 }   # 30 mi
+      - type: entities
+        title: Pool / Lightning
+        state_color: true
+        entities:
+          - entity: sensor.stormwatch_swim_status
+            name: Swim Status
+          - entity: sensor.stormwatch_nearest_strike_distance
+            name: Nearest Strike Distance
+          - entity: sensor.stormwatch_nearest_strike_bearing
+            name: Nearest Strike Bearing
+          - entity: sensor.stormwatch_strike_count_15m
+            name: Strikes (15 min)
+          - entity: sensor.stormwatch_all_clear_at
+            name: All Clear At
 
-  # Alert levels -- change how loud each NWS warning/watch is. One select per
-  # event, named select.stormwatch_<event name in snake_case>. Changes apply
-  # immediately; see docs/HOME-ASSISTANT.md#change-alert-levels-from-home-assistant.
-  - type: entities
-    title: Alert levels
-    entities:
-      - entity: select.stormwatch_tornado_warning
-      - entity: select.stormwatch_tornado_watch
-      - entity: select.stormwatch_hurricane_warning
-      - entity: select.stormwatch_hurricane_watch
-      - entity: select.stormwatch_tropical_storm_warning
-      - entity: select.stormwatch_tropical_storm_watch
-      - entity: select.stormwatch_extreme_wind_warning
-      - entity: select.stormwatch_high_wind_warning
-      - entity: select.stormwatch_severe_thunderstorm_warning
-      - entity: select.stormwatch_severe_thunderstorm_watch
-      - entity: select.stormwatch_flash_flood_warning
-      - entity: select.stormwatch_flood_warning
-      - entity: select.stormwatch_flood_watch
-      - entity: select.stormwatch_winter_storm_warning
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.stormwatch_lightning_nearby
+            state: "on"
+        card:
+          type: markdown
+          content: >
+            # POOL CLOSED -- LIGHTNING NEARBY
 
-  # Watering verdict -- a readable Water / Skip summary. It mirrors the
-  # weekly-aware logic of binary_sensor.stormwatch_watering_needed (the
-  # actionable flag below): dry 24h + dry 48h forecast + a dry-enough week.
-  # NWS rainfall is US-only; metric users: swap "in" and the thresholds.
-  - type: markdown
-    title: Watering
-    content: |
-      {% set w24 = states('sensor.stormwatch_rain_last_24h') | float(0) -%}
-      {% set f48 = states('sensor.stormwatch_rain_forecast_48h') | float(0) -%}
-      {% set ft = states('sensor.stormwatch_rain_forecast_today') | float(0) -%}
-      {% set d7 = states('sensor.stormwatch_rain_last_7d') | float(0) -%}
-      {% if w24 >= 0.1 -%}
-      ## Skip watering
-      It rained **{{ w24 }} in** in the last 24 hours.
-      {% elif f48 >= 0.1 -%}
-      ## Skip watering
-      **{{ f48 }} in** of rain is forecast in the next 48 hours.
-      {% elif d7 >= 0.5 -%}
-      ## Skip watering
-      **{{ d7 }} in** already fell this week.
-      {% else -%}
-      ## Water today
-      Dry across the last 24h, the next 48h, and the past week.
-      {% endif %}
-      Forecast today **{{ ft }} in** · next 48h **{{ f48 }} in** · observed 24h **{{ w24 }} in** · 7-day **{{ d7 }} in**
+            Nearest strike **{{ states('sensor.stormwatch_nearest_strike_distance') }}**
+            ({{ states('sensor.stormwatch_nearest_strike_bearing') }}). All clear at
+            {{ states('sensor.stormwatch_all_clear_at') }}.
 
-  - type: entities
-    title: Rain & Watering
-    entities:
-      # The actionable flag -- build automations on this (on = water today).
-      - entity: binary_sensor.stormwatch_watering_needed
-        name: Watering Needed
-      - type: divider
-      - entity: sensor.stormwatch_rain_forecast_today
-        name: Forecast Today
-      - entity: sensor.stormwatch_rain_forecast_48h
-        name: Forecast (48h)
-      - entity: sensor.stormwatch_rain_last_24h
-        name: Observed (24h)
-      - entity: sensor.stormwatch_rain_last_7d
-        name: Observed (7d)
+      # Watering verdict -- a readable Water / Skip summary. It mirrors the
+      # weekly-aware logic of binary_sensor.stormwatch_watering_needed (the
+      # actionable flag below): dry 24h + dry 48h forecast + a dry-enough week.
+      # NWS rainfall is US-only; metric users: swap "in" and the thresholds.
+      - type: markdown
+        title: Watering
+        content: |
+          {% set w24 = states('sensor.stormwatch_rain_last_24h') | float(0) -%}
+          {% set f48 = states('sensor.stormwatch_rain_forecast_48h') | float(0) -%}
+          {% set ft = states('sensor.stormwatch_rain_forecast_today') | float(0) -%}
+          {% set d7 = states('sensor.stormwatch_rain_last_7d') | float(0) -%}
+          {% if w24 >= 0.1 -%}
+          ## Skip watering
+          It rained **{{ w24 }} in** in the last 24 hours.
+          {% elif f48 >= 0.1 -%}
+          ## Skip watering
+          **{{ f48 }} in** of rain is forecast in the next 48 hours.
+          {% elif d7 >= 0.5 -%}
+          ## Skip watering
+          **{{ d7 }} in** already fell this week.
+          {% else -%}
+          ## Water today
+          Dry across the last 24h, the next 48h, and the past week.
+          {% endif %}
+          Forecast today **{{ ft }} in** · next 48h **{{ f48 }} in** · observed 24h **{{ w24 }} in** · 7-day **{{ d7 }} in**
+
+      - type: entities
+        title: Rain & Watering
+        entities:
+          # The actionable flag -- build automations on this (on = water today).
+          - entity: binary_sensor.stormwatch_watering_needed
+            name: Watering Needed
+          - type: divider
+          - entity: sensor.stormwatch_rain_forecast_today
+            name: Forecast Today
+          - entity: sensor.stormwatch_rain_forecast_48h
+            name: Forecast (48h)
+          - entity: sensor.stormwatch_rain_last_24h
+            name: Observed (24h)
+          - entity: sensor.stormwatch_rain_last_7d
+            name: Observed (7d)
+
+      - type: entities
+        title: StormWatch Sources
+        state_color: true
+        entities:
+          - entity: binary_sensor.stormwatch_nws_available
+            name: NWS
+          - entity: binary_sensor.stormwatch_lightning_available
+            name: Lightning (Blitzortung)
+          - entity: binary_sensor.stormwatch_rain_available
+            name: Rain
+          - entity: binary_sensor.stormwatch_config_problem
+            name: Config Problem
