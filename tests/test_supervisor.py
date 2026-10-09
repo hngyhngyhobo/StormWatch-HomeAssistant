@@ -51,6 +51,11 @@ def _config(**overrides: object) -> Config:
         longitude=-84.6155,
         mqtt_host="192.168.1.10",
         nws_contact="you@example.com",
+        # Narrow fixed lists (not the shipped defaults): these tests rely on
+        # "Winter Storm Warning" in the fixture being unmatched.
+        alerts_critical=("Tornado Warning", "Flash Flood Emergency"),
+        alerts_high=("Severe Thunderstorm Warning", "Flash Flood Warning"),
+        alerts_normal=("Tornado Watch", "Severe Thunderstorm Watch"),
     )
     base.update(overrides)
     return Config(**base)
@@ -103,7 +108,7 @@ class FakePublisher:
 
 
 def test_run_alert_cycle_publishes_raw_active_count_and_matched_highest() -> None:
-    # Default env rules: ALERTS_HIGH includes "Severe Thunderstorm Warning"
+    # Test env rules: ALERTS_HIGH includes "Severe Thunderstorm Warning"
     # but nothing matches "Winter Storm Warning" - it's still counted in the
     # raw active_alerts total, just excluded from highest/critical.
     config = _config()

@@ -17,6 +17,11 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+import yaml
+
+from stormwatch import config as config_module
+from stormwatch import rules as rules_module
 from stormwatch.config import Config
 from stormwatch.rules import PRIORITY_ORDER, AlertTracker, RuleEngine, priority_rank
 
@@ -362,7 +367,7 @@ def test_generate_default_priorities(tmp_path: Path) -> None:
         "Winter Storm Warning": "high",
         "Freeze Warning": "normal",
         "Frost Advisory": "normal",
-        "Flood Warning": "normal",  # regex catch-all, not individually listed
+        "Flood Warning": "high",
         "Wind Advisory": "normal",
         "Special Weather Statement": None,  # not a warning/watch/advisory -> ignored
     }
@@ -384,8 +389,8 @@ def test_generate_default_tornado_warning_matches_before_generic_warning_catch_a
     tmp_path: Path,
 ) -> None:
     """Rule evaluation is first-match (RuleEngine.evaluate_detail): the
-    'Catastrophic warnings' rule must be matched before the later
-    '.*Warning$' catch-all rule, or Tornado Warning would silently degrade
+    'Wake me up' rule must be matched before the later
+    '.*(Warning|Watch)$' catch-all rule, or Tornado Warning would silently degrade
     from critical to normal.
     """
     loaded = _load_default_engine(tmp_path)
@@ -420,6 +425,75 @@ def test_generate_default_quiet_hours_behavior_cold_vs_catchall(tmp_path: Path) 
     )
     assert wind_advisory_priority == "normal"
     assert wind_quiet is True
+
+
+_DEFAULT_LEVEL_CASES = [
+    ("High Wind Warning", "high"),
+    ("Tornado Watch", "high"),
+    ("Hurricane Watch", "high"),
+    ("Severe Thunderstorm Watch", "high"),
+    ("Flash Flood Watch", "high"),
+    ("Tropical Storm Warning", "high"),
+    ("Flood Watch", "normal"),
+    ("Freeze Warning", "normal"),
+    ("Frost Advisory", "normal"),
+    ("Wind Advisory", "normal"),
+    ("Tornado Warning", "critical"),
+    ("Hurricane Warning", "critical"),
+    ("Extreme Wind Warning", "critical"),
+    ("Made Up Warning", "normal"),
+    ("Made Up Watch", "normal"),
+    ("Tropical Cyclone Local Statement", None),
+]
+
+
+@pytest.mark.parametrize(("event", "expected"), _DEFAULT_LEVEL_CASES)
+def test_generate_default_alert_levels(tmp_path: Path, event: str, expected: str | None) -> None:
+    loaded = _load_default_engine(tmp_path)
+
+    priority, _quiet, _desc = loaded.evaluate_detail(_alert(event=event, severity="Severe"))
+    assert priority == expected
+
+
+def _default_rules() -> list[dict]:
+    return yaml.safe_load(rules_module._DEFAULT_ALERTS_YAML)["rules"]
+
+
+def test_generate_default_quiet_hours_only_on_advisories(tmp_path: Path) -> None:
+    loaded = _load_default_engine(tmp_path)
+    explicit = [e for r in _default_rules()[:3] for e in r["match"]["event"]]
+    assert explicit
+
+    for event in [*explicit, "Made Up Warning", "Made Up Watch"]:
+        _p, quiet, _d = loaded.evaluate_detail(_alert(event=event, severity="Severe"))
+        assert quiet is False, event
+
+    _p, quiet, _d = loaded.evaluate_detail(_alert(event="Wind Advisory", severity="Severe"))
+    assert quiet is True
+
+
+def test_env_fallback_defaults_match_new_levels() -> None:
+    engine = RuleEngine(
+        Config(
+            latitude=34.0234,
+            longitude=-84.6155,
+            mqtt_host="192.168.1.10",
+            nws_contact="you@example.com",
+        )
+    )
+
+    assert engine.evaluate(_alert(event="High Wind Warning")) == "high"
+    assert engine.evaluate(_alert(event="Hurricane Warning")) == "critical"
+    assert engine.evaluate(_alert(event="Flood Watch")) == "normal"
+    assert engine.evaluate(_alert(event="Tornado Watch")) == "high"
+
+
+def test_env_fallback_tuples_match_default_yaml() -> None:
+    wake, heads_up, silent = (set(r["match"]["event"]) for r in _default_rules()[:3])
+
+    assert set(config_module._DEFAULT_ALERTS_CRITICAL) == wake
+    assert set(config_module._DEFAULT_ALERTS_HIGH) == heads_up
+    assert set(config_module._DEFAULT_ALERTS_NORMAL) == silent
 
 
 # --- AlertTracker ------------------------------------------------------------
