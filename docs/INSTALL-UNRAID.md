@@ -79,7 +79,7 @@ Setting both **Latitude** and **Longitude** always wins over **Location**. See
 [CONFIGURATION.md#location-resolution](CONFIGURATION.md#location-resolution) for the full
 resolution order and cache behavior.
 
-Every other field (MQTT port/credentials, units, alert thresholds, advanced settings, the optional
+Every other field (MQTT port/credentials, units, advanced settings, the optional
 Xweather section) has a working default — full reference in
 [CONFIGURATION.md](CONFIGURATION.md).
 
@@ -106,36 +106,28 @@ sections) also has a working default — full reference in [CONFIGURATION.md](CO
 
 ### Choosing which alerts notify you
 
-StormWatch sorts every NWS alert into one of three tiers:
+StormWatch sorts every NWS alert into one of three levels:
 
-- **Critical** — breaks through Do Not Disturb on your phone (the iOS critical-alert push).
-  Reserved for "must never be missed," e.g. a Tornado Warning.
-- **High** — a normal push notification with an audible sound. Does not break Do Not Disturb.
-- **Normal** — silent. Still visible in Home Assistant, just no sound and no interruption.
+- **Critical ("WAKE ME UP")** — breaks through Do Not Disturb and the silent switch on your phone
+  (the iOS critical-alert push). Reserved for "must never be missed," e.g. a Tornado Warning.
+- **High ("Heads-up")** — pops up on screen with no sound by default. A blueprint option turns the
+  sound on. Does not break Do Not Disturb.
+- **Normal ("Silent push")** — goes straight to the notification list. No pop-up, no sound.
 
-StormWatch's job is only to classify each alert into one of these three tiers and publish it — what
-actually becomes a phone notification is decided by the Home Assistant automation you set up (the
-severe-alerts blueprint covered in [HOME-ASSISTANT.md](HOME-ASSISTANT.md) is the easiest way).
+StormWatch's job is only to classify each alert and publish it. What actually reaches your phone is
+decided by the Home Assistant automation you set up (the severe-alerts blueprint covered in
+[HOME-ASSISTANT.md](HOME-ASSISTANT.md) is the easiest way).
 
-Three template fields hold the tiers, as comma-separated exact NWS event names:
+The default levels are ready to use. On first start, StormWatch writes `/config/alerts.yaml`
+(on Unraid: `/mnt/user/appdata/stormwatch/alerts.yaml`) with the default lists. **To change which
+events go to which level, edit that file.** It hot-reloads within 30 seconds, so no restart or
+Apply is needed. The full default lists and how to edit them are in
+**[ALERT-RULES.md](ALERT-RULES.md)**.
 
-| Field | Default |
-|---|---|
-| **Alerts Critical** | `Tornado Warning,Flash Flood Emergency` |
-| **Alerts High** | `Severe Thunderstorm Warning,Flash Flood Warning` |
-| **Alerts Normal** | `Tornado Watch,Severe Thunderstorm Watch` |
-
-To add an event, type its exact NWS event name into the matching field (comma-separated if the
-field already has entries) and click **Apply**.
-
-Want more — regex matching, severity/urgency/certainty filters, per-rule quiet hours, or disabling
-a rule entirely? That all lives in `/config/alerts.yaml`, which StormWatch auto-generates on first
-run with a broad default (winter weather is already covered out of the box: Winter Storm/Ice Storm/
-Blizzard Warning → high, Freeze/Frost → normal). Full details in **[ALERT-RULES.md](ALERT-RULES.md)**.
-
-One difference to keep in mind: edits to `/config/alerts.yaml` hot-reload automatically — no restart
-needed. Changes to Unraid template fields, like the three above, need **Apply**, which recreates the
-container (your `/config` volume, including `alerts.yaml` itself, is untouched either way).
+The template also has three fields named **Alerts Critical**, **Alerts High** and **Alerts
+Normal**. They are advanced fallback fields. They are used only if `/config/alerts.yaml` is
+missing or fails validation. Leave them blank. Typing an event into them does not change a working
+install.
 
 ## Verify
 
@@ -180,6 +172,12 @@ The template also exposes a WebUI button pointed at the container's `:8099/healt
   and shows an **"update ready"** badge automatically once a new image is published under that tag
   — no manual digest checking. Click the badge (or the container icon → **Update**) to pull and
   recreate the container with the new image. Your `/config` volume and settings are untouched.
+- **New default alert levels on an existing install.** StormWatch only writes
+  `/config/alerts.yaml` when it is missing, so an updated install keeps its current file. To adopt
+  the new defaults, rename `/mnt/user/appdata/stormwatch/alerts.yaml` (for example to
+  `alerts.yaml.old`; keep it if you customized the old one) and restart the container. A fresh
+  default file is written. See
+  [ALERT-RULES.md](ALERT-RULES.md#updating-an-existing-install).
 - **Pin the minor tag while StormWatch is on 0.x.** Images are published as `:latest`, `:0.2.0`,
   `:0.2`, `:0`. Set the **Repository** field to `ghcr.io/hngyhngyhobo/stormwatch:0.2` (or whatever
   the current minor is) rather than `:latest` or the bare `:0` — pre-1.0, a 0.x *minor* bump (e.g.

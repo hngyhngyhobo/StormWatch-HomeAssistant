@@ -42,9 +42,11 @@ def test_minimal_valid_env_defaults() -> None:
     assert config.mqtt_password is None
     assert config.units == "imperial"
     assert config.all_clear_minutes == 30
-    assert config.alerts_critical == ("Tornado Warning", "Flash Flood Emergency")
-    assert config.alerts_high == ("Severe Thunderstorm Warning", "Flash Flood Warning")
-    assert config.alerts_normal == ("Tornado Watch", "Severe Thunderstorm Watch")
+    assert "Tornado Warning" in config.alerts_critical
+    assert "Hurricane Warning" in config.alerts_critical
+    assert "High Wind Warning" in config.alerts_high
+    assert "Tornado Watch" in config.alerts_high
+    assert "Flood Watch" in config.alerts_normal
     assert config.quiet_hours == (22, 7)
     assert config.log_level == "INFO"
     assert config.blitzortung_mqtt_host == "blitzortung.ha.sed.pl"

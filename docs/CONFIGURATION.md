@@ -9,18 +9,18 @@ is the full reference; if you just want the two you must set to get running, see
 
 StormWatch has two layers of configuration, and most people only ever need the first:
 
-- **Environment variables (this page)** — set location, MQTT connection, units, the lightning
-  proximity thresholds for the pool/swim state machine, and a simple comma-separated list of which
-  NWS event names count as `critical` / `high` / `normal`. This covers the large majority of
-  setups: type event names into a template field, restart, done. No file editing.
-- **`/config/alerts.yaml`** — a mounted YAML file for full control over alert matching: regex event
-  matching, matching on severity/urgency/certainty/response, per-rule quiet hours, enabling or
-  disabling individual rules. It's auto-generated with sensible defaults on first run and
-  hot-reloads on change — no restart needed. See [ALERT-RULES.md](ALERT-RULES.md).
+- **Environment variables (this page)** — set location, MQTT connection, units, and the lightning
+  proximity thresholds for the pool/swim state machine.
+- **`/config/alerts.yaml`** — the real control for alert levels: which NWS events are `critical` /
+  `high` / `normal`, regex event matching, matching on severity/urgency/certainty/response,
+  per-rule quiet hours, enabling or disabling individual rules. StormWatch writes it with sensible
+  defaults on first start if it is missing, and it hot-reloads on change (within 30 seconds, no
+  restart needed). See [ALERT-RULES.md](ALERT-RULES.md).
 
-If the env-var alert lists (`ALERTS_CRITICAL` / `ALERTS_HIGH` / `ALERTS_NORMAL`, below) are enough
-for you, you never need to touch `alerts.yaml` at all — it exists underneath either way and the env
-vars are just a friendlier way of writing simple rules into it.
+The env-var alert lists (`ALERTS_CRITICAL` / `ALERTS_HIGH` / `ALERTS_NORMAL`, below) are a fallback
+only. They are used when `/config/alerts.yaml` is missing or fails validation. Once `alerts.yaml`
+loads, it replaces them entirely, so changing them on a working install does nothing. To change
+alert levels, edit `/config/alerts.yaml`.
 
 ## Required
 
@@ -91,8 +91,8 @@ The settings most people will actually touch, beyond the two required ones.
 | `CLOSE_RADIUS` | `10` | In `UNITS`. A strike inside this radius closes the pool (`swim_status` → `CLOSED`) |
 | `WATCH_RADIUS` | `25` | In `UNITS`. A strike inside this radius (but outside `CLOSE_RADIUS`) sets `swim_status` → `WATCH` |
 | `ALL_CLEAR_MINUTES` | `30` | Minutes of no qualifying lightning activity before signaling all-clear; resets on every qualifying strike |
-| `ALERTS_CRITICAL` / `ALERTS_HIGH` / `ALERTS_NORMAL` | see [ALERT-RULES.md](ALERT-RULES.md) | Comma-separated NWS event names |
-| `QUIET_HOURS` | `22:00-07:00` | Applies only to rules with `quiet_hours: true` |
+| `ALERTS_CRITICAL` / `ALERTS_HIGH` / `ALERTS_NORMAL` | blank (built-in lists, same as the default `alerts.yaml`) | Fallback only. Comma-separated NWS event names, used only if `/config/alerts.yaml` is missing or invalid. To change alert levels, edit `/config/alerts.yaml` — see [ALERT-RULES.md](ALERT-RULES.md). |
+| `QUIET_HOURS` | `22:00-07:00` | Applies only to rules with `quiet_hours: true`. In the default `alerts.yaml`, only advisories use it. |
 | `LOG_LEVEL` | `INFO` | |
 
 `CLOSE_RADIUS`, `WATCH_RADIUS`, and `ALL_CLEAR_MINUTES` drive the lightning decision state machine

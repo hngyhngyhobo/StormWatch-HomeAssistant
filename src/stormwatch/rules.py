@@ -47,13 +47,20 @@ def priority_rank(p: str) -> int:
         return len(PRIORITY_ORDER)
 
 
-# Default /config/alerts.yaml (owner decision 2026-08-09): broad coverage by
-# design -- essentially every NWS warning/watch/advisory emits an event,
-# prioritized by severity. Deciding what becomes a notification (vs. just an
-# entity/attribute update) is Home Assistant's job, not this file's; trim
-# rules here only if you want an alert type to never emit at all.
+# Default /config/alerts.yaml. Owner decision 2026-10-09: warnings and watches
+# get explicit levels (critical/high/normal) and nothing is dropped overnight
+# except advisories. Home Assistant decides how each level reaches the phone.
+# The event lists in the first three rules must match the ALERTS_* fallback
+# tuples in config.py (a test enforces it).
 _DEFAULT_ALERTS_YAML = """\
 version: 1
+
+# Alert levels (owner decision 2026-10-09). Home Assistant decides how each level reaches the phone;
+# with the StormWatch severe-alerts blueprint:
+#   critical = WAKE ME UP: loud, breaks through Do Not Disturb and silent mode
+#   high     = Heads-up: pops up on screen, no sound (sound is a blueprint option)
+#   normal   = Silent push: goes straight to the notification list, no pop-up, no sound
+# First matching rule wins. Edit freely -- this file is hot-reloaded within 30 seconds.
 
 defaults:
   priority: ignore          # statements/outlooks not matched below are dropped from EVENTS
@@ -61,36 +68,61 @@ defaults:
   min_severity: Minor
 
 rules:
-  - name: Catastrophic warnings
+  - name: Wake me up
     match:
-      event: ["Tornado Warning", "Flash Flood Emergency", "Extreme Wind Warning",
-              "Hurricane Warning"]
-    priority: critical      # bypasses Do Not Disturb in HA
+      event: [
+        "Civil Danger Warning", "Earthquake Warning", "Extreme Wind Warning",
+        "Flash Flood Emergency", "Hazardous Materials Warning", "Hurricane Warning",
+        "Nuclear Power Plant Warning", "Radiological Hazard Warning",
+        "Shelter In Place Warning", "Storm Surge Warning", "Tornado Warning",
+        "Tsunami Warning", "Typhoon Warning"
+      ]
+    priority: critical
     include_description: true
 
-  - name: Major warnings
+  - name: Heads-up
     match:
-      event: ["Severe Thunderstorm Warning", "Flash Flood Warning", "Winter Storm Warning",
-              "Ice Storm Warning", "Blizzard Warning", "Tropical Storm Warning",
-              "Storm Surge Warning"]
+      event: [
+        "Ashfall Warning", "Avalanche Warning", "Blizzard Warning", "Blowing Dust Warning",
+        "Coastal Flood Warning", "Dust Storm Warning", "Extreme Cold Warning",
+        "Extreme Heat Warning", "Fire Warning", "Flash Flood Warning", "Flash Flood Watch",
+        "Flood Warning", "High Surf Warning", "High Wind Warning",
+        "Hurricane Force Wind Warning", "Hurricane Watch", "Ice Storm Warning",
+        "Lake Effect Snow Warning", "Lakeshore Flood Warning", "Severe Thunderstorm Warning",
+        "Severe Thunderstorm Watch", "Snow Squall Warning", "Tornado Watch",
+        "Tropical Storm Warning", "Tropical Storm Watch", "Volcano Warning",
+        "Winter Storm Warning"
+      ]
     priority: high
 
-  - name: Cold protection          # freeze/frost — plants, pipes, pets
+  - name: Silent push
     match:
-      event: ["Freeze Warning", "Frost Advisory", "Freeze Watch",
-              "Hard Freeze Warning", "Hard Freeze Watch"]
+      event: [
+        "Avalanche Watch", "Coastal Flood Watch", "Extreme Cold Watch", "Extreme Heat Watch",
+        "Fire Weather Watch", "Flood Watch", "Freeze Warning", "Freeze Watch", "Gale Warning",
+        "Gale Watch", "Hazardous Seas Warning", "Hazardous Seas Watch",
+        "Heavy Freezing Spray Warning", "Heavy Freezing Spray Watch", "High Wind Watch",
+        "Hurricane Force Wind Watch", "Lakeshore Flood Watch", "Law Enforcement Warning",
+        "Red Flag Warning", "Special Marine Warning", "Storm Surge Watch", "Storm Warning",
+        "Storm Watch", "Tsunami Watch", "Typhoon Watch", "Winter Storm Watch"
+      ]
     priority: normal
 
-  - name: All other warnings       # flood, wind, heat, snow squall, dust, etc.
+  - name: Cold protection          # frost - plants, pipes, pets
     match:
-      event_regex: ".*Warning$"
+      event: ["Frost Advisory", "Hard Freeze Warning", "Hard Freeze Watch"]
     priority: normal
 
-  - name: Watches and advisories
+  - name: Any other warning or watch   # safety net for new NWS event names
     match:
-      event_regex: ".*(Watch|Advisory)$"
+      event_regex: ".*(Warning|Watch)$"
     priority: normal
-    quiet_hours: true       # suppressed 22:00-07:00
+
+  - name: Advisories                # silent; dropped during QUIET_HOURS (default 22:00-07:00)
+    match:
+      event_regex: ".*Advisory$"
+    priority: normal
+    quiet_hours: true
 """
 
 

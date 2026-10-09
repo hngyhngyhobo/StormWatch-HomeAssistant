@@ -20,8 +20,9 @@ wake you up, not arrive as a silent, Do-Not-Disturb-respecting notification.
 
 ## What it does
 
-- **NWS watches and warnings → Home Assistant entities and critical iOS alerts.** Nearly everything
-  NWS issues is reported by default; what actually notifies you is curated Home Assistant-side.
+- **NWS watches and warnings → Home Assistant entities and critical iOS alerts.** Warnings and
+  watches are sorted into three levels by default (see "What reaches your phone" below); you can
+  change the levels in `/config/alerts.yaml`.
 - **Lightning proximity with a real all-clear timer** — swim status, nearest-strike distance/bearing,
   strike count, and a countdown to all-clear, from the free community Blitzortung network.
 - **Rainfall forecast and observed totals** for watering decisions — today/48h forecast plus
@@ -49,6 +50,21 @@ Quickest path — Unraid:
 
 Full step-by-step guides: **[Unraid](docs/INSTALL-UNRAID.md)** · **[Docker / Compose](docs/INSTALL-DOCKER.md)**.
 
+## What reaches your phone
+
+StormWatch sorts every NWS warning and watch into one of three levels. With the StormWatch
+severe-alerts blueprint, each level reaches your phone like this:
+
+| Level | What your phone does |
+|---|---|
+| **WAKE ME UP** (critical) | Loud critical alert. Breaks through Do Not Disturb and the silent switch. |
+| **Heads-up** (high) | Pops up on screen with no sound by default. A blueprint option turns the sound on. |
+| **Silent push** (normal) | Goes straight to the notification list. No pop-up, no sound. |
+| **Off** (ignore) | No push. |
+
+Which events land in which level is set in `/config/alerts.yaml` (written on first start). Full
+lists and how to change them: **[docs/ALERT-RULES.md](docs/ALERT-RULES.md)**.
+
 ## Entities
 
 Published via MQTT discovery under a single device, `StormWatch`:
@@ -75,8 +91,9 @@ Set your location with either `LOCATION="Your City, ST"` (geocoded once and cach
 `LATITUDE`/`LONGITUDE` (e.g. `34.0234` / `-84.6155`) — coordinates are recommended for the
 lightning-proximity feature, since a city geocode lands on the city center, not your address.
 
-Full reference (every variable, alert rules, Xweather): **[docs/CONFIGURATION.md](docs/CONFIGURATION.md)**.
-Customizing which alerts notify you: **[docs/ALERT-RULES.md](docs/ALERT-RULES.md)**.
+Full reference (every variable, Xweather): **[docs/CONFIGURATION.md](docs/CONFIGURATION.md)**.
+Alert levels are set in `/config/alerts.yaml`, not in environment variables:
+**[docs/ALERT-RULES.md](docs/ALERT-RULES.md)**.
 
 ## Documentation
 
@@ -94,6 +111,10 @@ While StormWatch is pre-1.0, pin the minor tag — `ghcr.io/hngyhngyhobo/stormwa
 Docker tab shows "update ready" on its own once a new image lands under your pinned tag; the
 Community Applications **Auto Update Applications** plugin can apply those automatically if you
 want it hands-off. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
+
+Existing installs keep their current `/config/alerts.yaml` after an update. To get the new default
+alert levels, rename that file (for example to `alerts.yaml.old`) and restart the container. See
+[docs/ALERT-RULES.md](docs/ALERT-RULES.md#updating-an-existing-install).
 
 ## Attribution & data sources
 

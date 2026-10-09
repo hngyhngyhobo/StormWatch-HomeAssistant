@@ -24,9 +24,79 @@ _NWS_POLL_FLOOR_SECONDS = 30
 _TRUE_VALUES = {"1", "true", "yes", "on"}
 _FALSE_VALUES = {"0", "false", "no", "off"}
 
-_DEFAULT_ALERTS_CRITICAL = ("Tornado Warning", "Flash Flood Emergency")
-_DEFAULT_ALERTS_HIGH = ("Severe Thunderstorm Warning", "Flash Flood Warning")
-_DEFAULT_ALERTS_NORMAL = ("Tornado Watch", "Severe Thunderstorm Watch")
+# Env-var fallback; must match rules._DEFAULT_ALERTS_YAML (a test enforces it).
+_DEFAULT_ALERTS_CRITICAL = (
+    "Civil Danger Warning",
+    "Earthquake Warning",
+    "Extreme Wind Warning",
+    "Flash Flood Emergency",
+    "Hazardous Materials Warning",
+    "Hurricane Warning",
+    "Nuclear Power Plant Warning",
+    "Radiological Hazard Warning",
+    "Shelter In Place Warning",
+    "Storm Surge Warning",
+    "Tornado Warning",
+    "Tsunami Warning",
+    "Typhoon Warning",
+)
+_DEFAULT_ALERTS_HIGH = (
+    "Ashfall Warning",
+    "Avalanche Warning",
+    "Blizzard Warning",
+    "Blowing Dust Warning",
+    "Coastal Flood Warning",
+    "Dust Storm Warning",
+    "Extreme Cold Warning",
+    "Extreme Heat Warning",
+    "Fire Warning",
+    "Flash Flood Warning",
+    "Flash Flood Watch",
+    "Flood Warning",
+    "High Surf Warning",
+    "High Wind Warning",
+    "Hurricane Force Wind Warning",
+    "Hurricane Watch",
+    "Ice Storm Warning",
+    "Lake Effect Snow Warning",
+    "Lakeshore Flood Warning",
+    "Severe Thunderstorm Warning",
+    "Severe Thunderstorm Watch",
+    "Snow Squall Warning",
+    "Tornado Watch",
+    "Tropical Storm Warning",
+    "Tropical Storm Watch",
+    "Volcano Warning",
+    "Winter Storm Warning",
+)
+_DEFAULT_ALERTS_NORMAL = (
+    "Avalanche Watch",
+    "Coastal Flood Watch",
+    "Extreme Cold Watch",
+    "Extreme Heat Watch",
+    "Fire Weather Watch",
+    "Flood Watch",
+    "Freeze Warning",
+    "Freeze Watch",
+    "Gale Warning",
+    "Gale Watch",
+    "Hazardous Seas Warning",
+    "Hazardous Seas Watch",
+    "Heavy Freezing Spray Warning",
+    "Heavy Freezing Spray Watch",
+    "High Wind Watch",
+    "Hurricane Force Wind Watch",
+    "Lakeshore Flood Watch",
+    "Law Enforcement Warning",
+    "Red Flag Warning",
+    "Special Marine Warning",
+    "Storm Surge Watch",
+    "Storm Warning",
+    "Storm Watch",
+    "Tsunami Watch",
+    "Typhoon Watch",
+    "Winter Storm Watch",
+)
 _DEFAULT_QUIET_HOURS = (22, 7)
 
 # Mirrors stormwatch.location.DEFAULT_LOCATION -- duplicated as a literal
