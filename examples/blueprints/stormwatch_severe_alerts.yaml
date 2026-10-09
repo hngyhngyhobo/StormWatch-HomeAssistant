@@ -5,12 +5,18 @@ blueprint:
     stormwatch/event/alert_issued, routed by priority per the
     StormWatch notification discipline (see DESIGN.md §8):
 
-    - critical (tornado warnings, lightning inside CLOSE_RADIUS): the iOS
-      critical-alert push, which can sound even through Do Not Disturb.
-    - high (severe thunderstorm warnings): a normal push with an audible,
-      distinct sound. Does not bypass Do Not Disturb.
-    - normal (watches, all-clears): silent, no sound, no DND bypass. An
-      all-clear should never wake anyone up.
+    - critical = WAKE ME UP (tornado / hurricane / extreme wind warnings,
+      lightning inside CLOSE_RADIUS): the iOS critical-alert push, which
+      sounds even through Do Not Disturb and the silent switch.
+    - high = Heads-up (e.g. high wind, severe thunderstorm, flash flood
+      warnings, tornado watch): pops up on screen with no sound. Turn on
+      "Heads-up alerts make a sound" if you want a sound. Never bypasses
+      Do Not Disturb.
+    - normal = Silent push (e.g. flood watch, freeze warning): goes
+      straight to the notification list. No pop-up, no sound.
+
+    Which NWS alert gets which level is set in StormWatch's
+    /config/alerts.yaml (see docs/ALERT-RULES.md).
   domain: automation
   source_url: https://github.com/hngyhngyhobo/StormWatch-HomeAssistant/blob/main/examples/blueprints/stormwatch_severe_alerts.yaml
   input:
@@ -30,6 +36,15 @@ blueprint:
       default: true
       selector:
         boolean: {}
+    heads_up_sound:
+      name: Heads-up alerts make a sound
+      description: >-
+        When off (the default), heads-up (high-priority) alerts pop up on
+        screen with no sound. When on, they play the default notification
+        sound. Either way they never bypass Do Not Disturb.
+      default: false
+      selector:
+        boolean: {}
 
 mode: queued
 max: 10
@@ -43,6 +58,7 @@ variables:
   priority: "{{ trigger.payload_json.priority }}"
   description: "{{ trigger.payload_json.description }}"
   critical_enabled: !input critical_enabled
+  heads_up_sound: !input heads_up_sound
 
 action:
   - choose:
@@ -80,8 +96,8 @@ action:
                   push:
                     sound: "default"
 
-      # high: severe thunderstorm warnings. Normal push, distinct sound —
-      # audible, but never bypasses Do Not Disturb.
+      # high = Heads-up: pops up on screen, silent unless heads_up_sound
+      # is on. Never bypasses Do Not Disturb.
       - conditions:
           - condition: template
             value_template: "{{ priority == 'high' }}"
@@ -93,10 +109,12 @@ action:
             message: "{{ description }}"
             data:
               push:
-                sound: "default"
+                # "none" (the string) is how the HA push relay sends a
+                # notification with no sound. An empty/null value is rejected.
+                sound: "{{ 'default' if heads_up_sound else 'none' }}"
 
-      # normal: watches, all-clears. Silent — no sound, no DND bypass.
-      # An all-clear should never wake anyone up.
+      # normal = Silent push: straight to the notification list, no pop-up,
+      # no sound. An all-clear should never wake anyone up.
       - conditions:
           - condition: template
             value_template: "{{ priority == 'normal' }}"
@@ -108,5 +126,6 @@ action:
             message: "{{ description }}"
             data:
               push:
-                sound: null
+                sound: "none"
+                interruption-level: passive
     default: []

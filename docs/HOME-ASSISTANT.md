@@ -90,14 +90,40 @@ The repo ships an importable blueprint that wires `sensor` state into real notif
 3. Click **Preview** → **Import Blueprint**.
 4. Go to the **Automations** tab → **Create Automation** → **Use Blueprint** → **StormWatch —
    Severe Weather Alerts**.
-5. Fill in the two inputs:
+5. Fill in the inputs:
    - **Notify Device** — pick your phone from the `mobile_app` device list.
    - **Enable Critical Alerts** — on by default; leave it on for tornado warnings to use the iOS
      critical-alert push (see below), or turn it off to route `critical`-priority alerts through a
      normal push instead.
+   - **Heads-up alerts make a sound** (`heads_up_sound`) — off by default. See the next section.
 6. Save.
 
-<!-- screenshot: blueprint import screen with the two inputs filled in -->
+<!-- screenshot: blueprint import screen with the inputs filled in -->
+
+### What each level does on your phone
+
+StormWatch sorts alerts into three levels (which events go in which level is set in
+`/config/alerts.yaml`; see [ALERT-RULES.md](ALERT-RULES.md)). The severe-alerts blueprint delivers
+them like this:
+
+| Level | Name | What your phone does |
+|---|---|---|
+| `critical` | WAKE ME UP | Loud critical alert. Breaks through Do Not Disturb and the silent switch. |
+| `high` | Heads-up | Pops up on screen with **no sound** by default. Turn on **Heads-up alerts make a sound** (`heads_up_sound`, off by default) to play the default notification sound. Never breaks through Do Not Disturb either way. |
+| `normal` | Silent push | Goes straight to the notification list. No pop-up, no sound (iOS `interruption-level: passive` and `sound: none`). |
+| `ignore` | Off | No push. |
+
+### If silent or heads-up alerts never arrive
+
+Older copies of this blueprint, and the older example automations, sent an empty `sound:` value for
+silent pushes. The iPhone push service rejects that, and Home Assistant logs
+`Error sending notification to <phone name>`. The result is that silent alerts never arrive.
+
+The fix:
+
+- **Blueprint:** Settings → Automations & scenes → Blueprints → the StormWatch blueprint →
+  three-dot menu → **Re-import blueprint**.
+- **Hand-written automation:** replace the empty `sound:` with `sound: none`.
 
 ## Importing the pool alerts blueprint
 
@@ -247,9 +273,9 @@ you learn to ignore. Priority maps directly to how loud the notification is allo
 
 | Priority | Examples today | Behavior |
 |---|---|---|
-| `critical` | Tornado Warning; pool closed (lightning inside `CLOSE_RADIUS`) | iOS critical-alert push — bypasses Do Not Disturb and a muted ringer. Reserved for the rare case that must never be missed. |
-| `high` | Severe Thunderstorm Warning | Normal push, distinct/audible sound. Does **not** bypass Do Not Disturb. |
-| `normal` | Watches (e.g. Tornado Watch, Severe Thunderstorm Watch); pool all-clear | Silent — no sound, no Do Not Disturb bypass. |
+| `critical` (WAKE ME UP) | Tornado Warning; pool closed (lightning inside `CLOSE_RADIUS`) | iOS critical-alert push — bypasses Do Not Disturb and a muted ringer. Reserved for the rare case that must never be missed. |
+| `high` (Heads-up) | Severe Thunderstorm Warning, Tornado Watch, Flash Flood Warning | Pops up on screen with no sound by default (the **Heads-up alerts make a sound** input adds one). Does **not** bypass Do Not Disturb. |
+| `normal` (Silent push) | Freeze Warning, Flood Watch, Red Flag Warning, advisories; pool all-clear | Goes straight to the notification list. No pop-up, no sound, no Do Not Disturb bypass. |
 
 The pool all-clear event is **always** `normal` priority, with no toggle to change that: **an
 all-clear should never wake anyone up.** The whole discipline only works if `critical` stays rare

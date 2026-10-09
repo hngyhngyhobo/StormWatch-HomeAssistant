@@ -88,9 +88,10 @@ action:
                   push:
                     sound: "default"
 
-      # All clear: always a normal, silent push — never critical, no
+      # All clear: always a pop-up with no sound — never critical, no
       # exception, no toggle. An all-clear should never wake anyone up
-      # (DESIGN.md §8 notification discipline).
+      # (DESIGN.md §8 notification discipline). "none" (the string) is how
+      # the HA push relay sends no sound; an empty/null value is rejected.
       - conditions:
           - condition: trigger
             id: all_clear
@@ -102,5 +103,5 @@ action:
             message: "No qualifying lightning detected within range for the configured all-clear window."
             data:
               push:
-                sound: null
+                sound: "none"
     default: []

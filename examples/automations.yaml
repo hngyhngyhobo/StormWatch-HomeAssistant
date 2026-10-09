@@ -50,8 +50,9 @@
                       critical: 1
                       volume: 1.0
 
-        # high: severe thunderstorm warnings. Normal push, distinct sound —
-        # audible, but never bypasses Do Not Disturb.
+        # high = Heads-up (e.g. high wind / severe thunderstorm warnings,
+        # tornado watch): pops up on screen with no sound. Change "none" to
+        # "default" if you want a sound. Never bypasses Do Not Disturb.
         - conditions:
             - condition: template
               value_template: "{{ priority == 'high' }}"
@@ -62,10 +63,12 @@
                 message: "{{ description }}"
                 data:
                   push:
-                    sound: "default"
+                    # "none" (the string) = no sound. An empty/null sound is
+                    # rejected by the iOS push relay and the push never arrives.
+                    sound: "none"
 
-        # normal: watches, all-clears. Silent — no sound, no DND bypass.
-        # An all-clear should never wake anyone up.
+        # normal = Silent push (e.g. flood watch, freeze warning): straight
+        # to the notification list, no pop-up, no sound.
         - conditions:
             - condition: template
               value_template: "{{ priority == 'normal' }}"
@@ -76,7 +79,8 @@
                 message: "{{ description }}"
                 data:
                   push:
-                    sound: null
+                    sound: "none"
+                    interruption-level: passive
       default: []
 
 - id: stormwatch_tornado_strobe
@@ -159,7 +163,7 @@
     Notifies when StormWatch's all-clear timer expires
     (stormwatch/event/all_clear) with no further qualifying lightning.
     Plain-YAML equivalent of the pool-alerts blueprint's all-clear branch.
-    Always a normal, silent push — never critical, no exception. An
+    Always a pop-up with no sound — never critical, no exception. An
     all-clear should never wake anyone up (DESIGN.md §8).
   mode: queued
   max: 10
@@ -173,4 +177,4 @@
         message: "No qualifying lightning detected within range for the configured all-clear window."
         data:
           push:
-            sound: null
+            sound: "none"
