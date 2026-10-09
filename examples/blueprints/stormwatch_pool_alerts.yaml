@@ -68,11 +68,16 @@ action:
                       true) }} km away ({{ trigger.payload_json.bearing_compass | default('unknown',
                       true) }}). Get out of the water.
                     data:
+                      # iPhone: critical alert. Android: alarm stream (rings on
+                      # vibrate/silent). Each phone ignores the other's keys.
                       push:
                         sound:
                           name: "default"
                           critical: 1
                           volume: 1.0
+                      ttl: 0
+                      priority: high
+                      channel: alarm_stream
             default:
               # critical_enabled toggled off — send a normal push instead
               # of the DND-bypassing critical-alert payload.
@@ -87,6 +92,10 @@ action:
                 data:
                   push:
                     sound: "default"
+                  ttl: 0
+                  priority: high
+                  channel: StormWatch Alerts
+                  importance: high
 
       # All clear: always a pop-up with no sound — never critical, no
       # exception, no toggle. An all-clear should never wake anyone up
@@ -104,4 +113,7 @@ action:
             data:
               push:
                 sound: "none"
+              # Android: low importance = no sound, no pop-up.
+              channel: StormWatch Silent
+              importance: low
     default: []

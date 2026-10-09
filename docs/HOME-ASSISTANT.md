@@ -290,6 +290,73 @@ controlled by `STRIKE_MAP_WINDOW_MINUTES` (default 30 minutes — see
 
 <!-- screenshot: lightning strike map card with close/watch rings -->
 
+## Android
+
+The blueprints and example automations work on Android as well as iPhone. Every notification
+carries both platforms' settings, and each phone ignores the other's. On Android:
+
+| Level | What your Android phone does |
+|---|---|
+| WAKE ME UP | Rings on the alarm stream, so it sounds even on vibrate or silent. Breaking through Do Not Disturb needs step 3 below. |
+| Heads-up | Pops up on screen. Android decides sound per notification channel, so it plays a sound unless you turn that channel's sound off (step 3). |
+| Silent push | Goes to the notification shade. No sound, no pop-up. |
+
+One-time setup, about five minutes per phone:
+
+1. **Install the Home Assistant app** from the Play Store and sign in. The phone then appears as a
+   `mobile_app` device; pick it as **Notify Device** when you import the
+   [severe alerts blueprint](#importing-the-severe-alerts-blueprint). In the phone's settings, set
+   the Home Assistant app's battery usage to **Unrestricted** so alerts are not delayed.
+2. **Create StormWatch's notification channels** by sending one test notification per channel.
+   Android fixes a channel's importance the first time it is used, so create them with these exact
+   settings before the first real alert. In Home Assistant go to Developer Tools → **Actions**,
+   switch to YAML mode, and run each of these once (replace `mobile_app_your_phone` with your
+   phone's notify action, which starts with `notify.mobile_app_`):
+
+   ```yaml
+   action: notify.mobile_app_your_phone
+   data:
+     title: StormWatch test
+     message: WAKE ME UP channel
+     data:
+       ttl: 0
+       priority: high
+       channel: alarm_stream
+   ```
+
+   ```yaml
+   action: notify.mobile_app_your_phone
+   data:
+     title: StormWatch test
+     message: Heads-up channel
+     data:
+       ttl: 0
+       priority: high
+       channel: StormWatch Heads-up
+       importance: high
+   ```
+
+   ```yaml
+   action: notify.mobile_app_your_phone
+   data:
+     title: StormWatch test
+     message: Silent channel
+     data:
+       channel: StormWatch Silent
+       importance: low
+   ```
+
+3. **Adjust two channels on the phone.** Open the phone's Settings → Apps → Home Assistant →
+   Notifications. (Or long-press one of the test notifications and tap the settings icon.) The
+   exact wording varies by phone maker.
+   - **alarm_stream** → turn on **Override Do Not Disturb** (sometimes "Ignore Do Not Disturb").
+     This is what lets WAKE ME UP through at night.
+   - **StormWatch Heads-up** → turn **Sound** off and leave **Pop on screen** on, if you want
+     Heads-up alerts silent like on iPhone. Leave it alone if you want a sound.
+
+If you change a channel's importance by mistake, you can still lower it in the phone's settings.
+Raising it again means deleting the channel there and re-running the matching test above.
+
 ## iOS critical alerts
 
 The `critical` priority — tornado warnings, and lightning inside `CLOSE_RADIUS` (pool closed) — is

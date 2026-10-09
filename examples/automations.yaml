@@ -13,6 +13,10 @@
 # yours under Settings > Devices & Services > Mobile App, or search
 # Developer Tools > Actions for services starting with `notify.mobile_app_`.
 #
+# Works on iPhone and Android: each notification carries both platforms'
+# settings and each phone ignores the other's. Android one-time setup (Do Not
+# Disturb override, silent Heads-up): docs/HOME-ASSISTANT.md#android.
+#
 # Merge this into configuration.yaml, e.g.:
 #   automation stormwatch: !include examples/automations.yaml
 # or copy the entries below into your existing automations.yaml.
@@ -49,6 +53,11 @@
                       name: "default"
                       critical: 1
                       volume: 1.0
+                  # Android: ring on the alarm stream, even on vibrate/silent.
+                  # Each phone ignores the other platform's keys.
+                  ttl: 0
+                  priority: high
+                  channel: alarm_stream
 
         # high = Heads-up (e.g. high wind / severe thunderstorm warnings,
         # tornado watch): pops up on screen with no sound. Change "none" to
@@ -66,6 +75,12 @@
                     # "none" (the string) = no sound. An empty/null sound is
                     # rejected by the iOS push relay and the push never arrives.
                     sound: "none"
+                  # Android: pop-up on its own channel; turn that channel's sound
+                  # off in the phone's notification settings for a silent pop-up.
+                  ttl: 0
+                  priority: high
+                  channel: StormWatch Heads-up
+                  importance: high
 
         # normal = Silent push (e.g. flood watch, freeze warning): straight
         # to the notification list, no pop-up, no sound.
@@ -81,6 +96,9 @@
                   push:
                     sound: "none"
                     interruption-level: passive
+                  # Android: low importance = no sound, no pop-up.
+                  channel: StormWatch Silent
+                  importance: low
       default: []
 
 - id: stormwatch_tornado_strobe
@@ -156,6 +174,9 @@
               name: "default"
               critical: 1
               volume: 1.0
+          ttl: 0
+          priority: high
+          channel: alarm_stream
 
 - id: stormwatch_pool_all_clear
   alias: StormWatch - Pool All Clear
@@ -178,3 +199,5 @@
         data:
           push:
             sound: "none"
+          channel: StormWatch Silent
+          importance: low
