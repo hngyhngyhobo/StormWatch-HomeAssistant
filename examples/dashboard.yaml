@@ -96,6 +96,27 @@ cards:
       - entity: zone.home
         circle: { source: config, radius: 48280, color: '#ffdd33', fill_opacity: 0.02 }   # 30 mi
 
+  # Alert levels -- change how loud each NWS warning/watch is. One select per
+  # event, named select.stormwatch_<event name in snake_case>. Changes apply
+  # immediately; see docs/HOME-ASSISTANT.md#change-alert-levels-from-home-assistant.
+  - type: entities
+    title: Alert levels
+    entities:
+      - entity: select.stormwatch_tornado_warning
+      - entity: select.stormwatch_tornado_watch
+      - entity: select.stormwatch_hurricane_warning
+      - entity: select.stormwatch_hurricane_watch
+      - entity: select.stormwatch_tropical_storm_warning
+      - entity: select.stormwatch_tropical_storm_watch
+      - entity: select.stormwatch_extreme_wind_warning
+      - entity: select.stormwatch_high_wind_warning
+      - entity: select.stormwatch_severe_thunderstorm_warning
+      - entity: select.stormwatch_severe_thunderstorm_watch
+      - entity: select.stormwatch_flash_flood_warning
+      - entity: select.stormwatch_flood_warning
+      - entity: select.stormwatch_flood_watch
+      - entity: select.stormwatch_winter_storm_warning
+
   # Watering verdict -- a readable Water / Skip summary. It mirrors the
   # weekly-aware logic of binary_sensor.stormwatch_watering_needed (the
   # actionable flag below): dry 24h + dry 48h forecast + a dry-enough week.

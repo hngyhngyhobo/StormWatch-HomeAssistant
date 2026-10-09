@@ -21,8 +21,8 @@ wake you up, not arrive as a silent, Do-Not-Disturb-respecting notification.
 ## What it does
 
 - **NWS watches and warnings → Home Assistant entities and critical iOS alerts.** Warnings and
-  watches are sorted into three levels by default (see "What reaches your phone" below); you can
-  change the levels in `/config/alerts.yaml`.
+  watches are sorted into three levels by default (see "What reaches your phone" below). Change
+  any level from a dropdown in Home Assistant, or in `/config/alerts.yaml` for advanced rules.
 - **Lightning proximity with a real all-clear timer** — swim status, nearest-strike distance/bearing,
   strike count, and a countdown to all-clear, from the free community Blitzortung network.
 - **Rainfall forecast and observed totals** for watering decisions — today/48h forecast plus
@@ -63,8 +63,12 @@ severe-alerts blueprint, each level reaches your phone like this:
 | **Silent push** (normal) | Goes straight to the notification list. No pop-up, no sound. |
 | **Off** (ignore) | No push. |
 
-Which events land in which level is set in `/config/alerts.yaml` (written on first start). Full
-lists and how to change them: **[docs/ALERT-RULES.md](docs/ALERT-RULES.md)**.
+You can change the level of any warning or watch from Home Assistant. Open the StormWatch device
+page and use the dropdowns on the Configuration card. The change takes effect immediately. See
+[Change alert levels from Home Assistant](docs/HOME-ASSISTANT.md#change-alert-levels-from-home-assistant).
+
+For advanced matching (regex, severity filters, quiet hours), edit `/config/alerts.yaml` (written
+on first start). Full lists and how to change them: **[docs/ALERT-RULES.md](docs/ALERT-RULES.md)**.
 
 ## Entities
 
@@ -75,6 +79,8 @@ Published via MQTT discovery under a single device, `StormWatch`:
   15-minute strike count, all-clear countdown, and a strikes map (GeoJSON).
 - **Rain & watering** — forecast (today/48h) and observed (24h/7d) rainfall totals, plus a
   weekly-aware `watering_needed` flag you can drive irrigation automations from.
+- **Alert levels** — one dropdown per NWS warning and watch, to change its level from Home
+  Assistant.
 - **Diagnostics** — connection status, plus per-source availability (NWS, lightning, rain).
 
 Full entity table with every attribute: **[docs/HOME-ASSISTANT.md](docs/HOME-ASSISTANT.md)**.
@@ -93,7 +99,8 @@ Set your location with either `LOCATION="Your City, ST"` (geocoded once and cach
 lightning-proximity feature, since a city geocode lands on the city center, not your address.
 
 Full reference (every variable, Xweather): **[docs/CONFIGURATION.md](docs/CONFIGURATION.md)**.
-Alert levels are set in `/config/alerts.yaml`, not in environment variables:
+Alert levels are set from Home Assistant dropdowns or in `/config/alerts.yaml`, not in environment
+variables:
 **[docs/ALERT-RULES.md](docs/ALERT-RULES.md)**.
 
 ## Documentation

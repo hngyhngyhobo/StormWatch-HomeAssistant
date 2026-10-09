@@ -623,3 +623,86 @@ def test_tracker_quiet_hours_suppresses_normal_issue_at_2300_and_emits_at_noon()
     assert len(emitted) == 1
     assert emitted[0].kind == "issued"
     assert emitted[0].priority == "normal"
+
+
+# --- HA-adjustable alert levels (overrides) ----------------------------------
+
+
+def _overrides(tmp_path: Path, **levels: str):
+    from stormwatch.levels import LevelOverrides
+
+    ov = LevelOverrides(str(tmp_path / "alert_levels.json"))
+    for event, priority in levels.items():
+        ov.set(event.replace("_", " "), priority)
+    return ov
+
+
+def _engine_with_default_yaml(tmp_path: Path) -> RuleEngine:
+    engine = RuleEngine(_config())
+    path = tmp_path / "alerts.yaml"
+    engine.generate_default(str(path))
+    assert engine.load(str(path))
+    return engine
+
+
+def test_override_ignore_beats_yaml(tmp_path: Path) -> None:
+    engine = _engine_with_default_yaml(tmp_path)
+    alert = _alert(event="High Wind Warning", severity="Severe")
+    assert engine.evaluate(alert) == "high"
+    engine.overrides = _overrides(tmp_path, High_Wind_Warning="ignore")
+    assert engine.evaluate(alert) is None
+    assert engine.evaluate_detail(alert) == (None, False, True)
+
+
+def test_override_critical_beats_yaml_and_skips_quiet_and_severity(tmp_path: Path) -> None:
+    engine = _engine_with_default_yaml(tmp_path)
+    alert = _alert(event="Flood Watch", severity="Minor")
+    assert engine.evaluate(alert) == "normal"
+    engine.overrides = _overrides(tmp_path, Flood_Watch="critical")
+    assert engine.evaluate_detail(alert) == ("critical", False, True)
+
+
+def test_event_without_override_follows_rules(tmp_path: Path) -> None:
+    engine = _engine_with_default_yaml(tmp_path)
+    engine.overrides = _overrides(tmp_path, Flood_Watch="critical")
+    assert engine.evaluate(_alert(event="High Wind Warning", severity="Severe")) == "high"
+
+
+def test_raising_override_falls_through_to_rules(tmp_path: Path, caplog) -> None:
+    engine = _engine_with_default_yaml(tmp_path)
+
+    class Boom:
+        def get(self, event):
+            raise RuntimeError("boom")
+
+    engine.overrides = Boom()
+    with caplog.at_level("ERROR"):
+        result = engine.evaluate(_alert(event="High Wind Warning", severity="Severe"))
+    assert result == "high"
+    assert any(r.levelname == "ERROR" for r in caplog.records)
+
+
+def test_effective_level(tmp_path: Path) -> None:
+    engine = _engine_with_default_yaml(tmp_path)
+    assert engine.effective_level("Tornado Warning") == "critical"
+    assert engine.effective_level("Flood Watch") == "normal"
+    assert engine.effective_level("Some Unlisted Statement") == "ignore"
+    engine.overrides = _overrides(tmp_path, Flood_Watch="ignore", Tornado_Warning="high")
+    assert engine.effective_level("Flood Watch") == "ignore"
+    assert engine.effective_level("Tornado Warning") == "high"
+
+
+def test_tracker_reemits_when_priority_raised_not_when_lowered(tmp_path: Path) -> None:
+    engine = _engine_with_default_yaml(tmp_path)
+    tracker = AlertTracker()
+    alert = _alert(event="Flood Watch", severity="Moderate")
+    first = tracker.diff([alert], engine, NOON)
+    assert [e.priority for e in first] == ["normal"]
+    assert tracker.diff([alert], engine, NOON) == []
+
+    engine.overrides = _overrides(tmp_path, Flood_Watch="critical")
+    raised = tracker.diff([alert], engine, NOON)
+    assert [(e.kind, e.priority) for e in raised] == [("issued", "critical")]
+
+    engine.overrides = _overrides(tmp_path, Flood_Watch="normal")
+    assert tracker.diff([alert], engine, NOON) == []

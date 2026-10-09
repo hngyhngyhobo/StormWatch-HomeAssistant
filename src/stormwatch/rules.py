@@ -17,10 +17,14 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import yaml
 
 from .config import Config
+
+if TYPE_CHECKING:
+    from .levels import LevelOverrides
 
 logger = logging.getLogger("stormwatch.rules")
 
@@ -333,6 +337,8 @@ class RuleEngine:
             min_severity=None,
         )
         self._yaml_ruleset: _RuleSet | None = None
+        # Per-event levels chosen in Home Assistant; win over every rule.
+        self.overrides: LevelOverrides | None = None
 
     @property
     def _active_ruleset(self) -> _RuleSet:
@@ -387,6 +393,18 @@ class RuleEngine:
         out of forwarding it.
         """
         properties = (alert.get("properties") or {}) if isinstance(alert, dict) else {}
+
+        # Fail-safe: a problem in the override path must never stop alerts;
+        # fall through to the normal rules instead.
+        if self.overrides is not None:
+            try:
+                override = self.overrides.get(properties.get("event"))
+            except Exception:
+                logger.exception("alert level override lookup failed; using normal rules")
+                override = None
+            if override is not None:
+                return (None if override == "ignore" else override), False, True
+
         ruleset = self._active_ruleset
 
         for rule in ruleset.rules:
@@ -398,6 +416,15 @@ class RuleEngine:
 
         priority = None if ruleset.default_priority == "ignore" else ruleset.default_priority
         return priority, False, True
+
+    def effective_level(self, event: str) -> str:
+        """Priority now in force for ``event`` ('critical'|'high'|'normal'|
+        'ignore'): the Home Assistant override if set, else what the active
+        rules give an Extreme-severity alert of that event."""
+        priority, _quiet, _desc = self.evaluate_detail(
+            {"properties": {"event": event, "severity": "Extreme"}}
+        )
+        return "ignore" if priority is None else priority
 
     def generate_default(self, path: str) -> None:
         """Write the default alerts.yaml (broad coverage, owner decision 2026-08-09)."""
@@ -458,8 +485,8 @@ class AlertTracker:
     def diff(self, current: list[dict], engine: RuleEngine, now: datetime) -> list[AlertEvent]:
         """Compare ``current`` alerts against last-seen state.
 
-        Emits 'issued' on a new matched id or a severity upgrade on an
-        existing id, and 'cleared' when a previously tracked id disappears.
+        Emits 'issued' on a new matched id or a severity or priority upgrade
+        on an existing id, and 'cleared' when a previously tracked id disappears.
         Identical reissues (same id, same-or-lower severity) are suppressed.
         Normal-priority issues on a quiet_hours-flagged rule are suppressed
         when ``now``'s local hour falls within ``engine.config.quiet_hours``;
@@ -492,8 +519,9 @@ class AlertTracker:
 
             previous = self._active.get(alert_id)
             is_new = previous is None
-            is_upgrade = previous is not None and _severity_rank(severity) > _severity_rank(
-                previous.severity
+            is_upgrade = previous is not None and (
+                _severity_rank(severity) > _severity_rank(previous.severity)
+                or priority_rank(priority) < priority_rank(previous.priority)
             )
 
             self._active[alert_id] = _TrackedAlert(

@@ -42,6 +42,8 @@ class FakeMqttClient:
         self.published: list[_Publish] = []
         self.on_connect = None
         self.on_disconnect = None
+        self.on_message = None
+        self.subscribed: list[tuple[str, int]] = []
         self.username: str | None = None
         self.password: str | None = None
 
@@ -57,6 +59,9 @@ class FakeMqttClient:
 
     def loop_start(self) -> None:
         self.loop_started = True
+
+    def subscribe(self, topic: str, qos: int = 0) -> None:
+        self.subscribed.append((topic, qos))
 
     def publish(self, topic: str, payload=None, qos: int = 0, retain: bool = False) -> None:
         self.published.append(_Publish(topic, payload, qos, retain))
@@ -388,3 +393,146 @@ def test_offline_publishes_retained_offline(config, fake_client) -> None:
     assert msg.payload == "offline"
     assert msg.retain is True
     assert msg.qos == 1
+
+
+# --- select entities + command topics ---------------------------------------
+
+_LEVEL_OPTIONS = ("WAKE ME UP", "Heads-up", "Silent push", "Off")
+
+
+def _select_spec(**kw) -> EntitySpec:
+    base = dict(
+        key="alert_level_tornado_warning",
+        name="Tornado Warning",
+        component="select",
+        icon="mdi:bell-cog",
+        entity_category="config",
+        options=_LEVEL_OPTIONS,
+    )
+    base.update(kw)
+    return EntitySpec(**base)
+
+
+def _discovery_payload(fake_client, spec: EntitySpec) -> dict:
+    topic = f"homeassistant/select/stormwatch/stormwatch_{spec.key}/config"
+    return json.loads(_by_topic(fake_client)[topic].payload)
+
+
+def test_select_discovery_payload_has_command_topic_and_options(config, fake_client) -> None:
+    pub = Publisher(config, client=fake_client)
+    spec = _select_spec()
+    pub.publish_discovery([spec])
+
+    payload = _discovery_payload(fake_client, spec)
+    assert payload["command_topic"] == "stormwatch/command/alert_level_tornado_warning"
+    assert payload["options"] == list(_LEVEL_OPTIONS)
+    assert payload["state_topic"] == "stormwatch/state/alert_level_tornado_warning"
+    assert payload["entity_category"] == "config"
+    assert "enabled_by_default" not in payload
+
+
+def test_enabled_by_default_false_emitted_only_when_false(config, fake_client) -> None:
+    pub = Publisher(config, client=fake_client)
+    spec = _select_spec(
+        key="alert_level_gale_warning", name="Gale Warning", enabled_by_default=False
+    )
+    pub.publish_discovery([spec])
+    assert _discovery_payload(fake_client, spec)["enabled_by_default"] is False
+
+
+def test_non_select_payload_unchanged(config, fake_client) -> None:
+    pub = Publisher(config, client=fake_client)
+    spec = EntitySpec(key="active_alerts", name="Active Alerts", component="sensor")
+    pub.publish_discovery([spec])
+    topic = "homeassistant/sensor/stormwatch/stormwatch_active_alerts/config"
+    payload = json.loads(_by_topic(fake_client)[topic].payload)
+    assert "command_topic" not in payload
+    assert "options" not in payload
+    assert "enabled_by_default" not in payload
+
+
+def test_on_connect_subscribes_to_command_topic(config, fake_client) -> None:
+    pub = Publisher(config, client=fake_client)
+    pub.connect()
+    fake_client.on_connect(fake_client, None, {}, 0, None)
+    assert ("stormwatch/command/#", 1) in fake_client.subscribed
+
+
+def test_on_connect_failure_does_not_subscribe(config, fake_client) -> None:
+    pub = Publisher(config, client=fake_client)
+    pub.connect()
+    fake_client.on_connect(fake_client, None, {}, 5, None)
+    assert fake_client.subscribed == []
+
+
+def test_on_connect_calls_connected_callback_after_subscribe(config, fake_client) -> None:
+    pub = Publisher(config, client=fake_client)
+    order: list[str] = []
+    pub.set_connected_callback(lambda: order.append("callback"))
+    orig_subscribe = fake_client.subscribe
+
+    def _sub(topic, qos=0):
+        order.append("subscribe")
+        orig_subscribe(topic, qos)
+
+    fake_client.subscribe = _sub
+    pub.connect()
+    fake_client.on_connect(fake_client, None, {}, 0, None)
+    assert order == ["subscribe", "callback"]
+
+
+def test_connected_callback_exception_is_swallowed(config, fake_client) -> None:
+    pub = Publisher(config, client=fake_client)
+
+    def boom() -> None:
+        raise RuntimeError("boom")
+
+    pub.set_connected_callback(boom)
+    pub.connect()
+    fake_client.on_connect(fake_client, None, {}, 0, None)
+    assert pub.connected is True
+
+
+class _Msg:
+    def __init__(self, topic: str, payload: bytes) -> None:
+        self.topic = topic
+        self.payload = payload
+
+
+def test_on_message_dispatches_key_and_stripped_payload(config, fake_client) -> None:
+    pub = Publisher(config, client=fake_client)
+    calls: list[tuple[str, str]] = []
+    pub.set_command_handler(lambda key, payload: calls.append((key, payload)))
+    pub.connect()
+    fake_client.on_message(
+        fake_client, None, _Msg("stormwatch/command/alert_level_tornado_warning", b" Off \n")
+    )
+    assert calls == [("alert_level_tornado_warning", "Off")]
+
+
+def test_on_message_handler_exception_swallowed(config, fake_client, caplog) -> None:
+    pub = Publisher(config, client=fake_client)
+
+    def boom(key: str, payload: str) -> None:
+        raise RuntimeError("boom")
+
+    pub.set_command_handler(boom)
+    pub.connect()
+    with caplog.at_level("ERROR"):
+        fake_client.on_message(fake_client, None, _Msg("stormwatch/command/x", b"Off"))
+    assert any(r.levelname == "ERROR" for r in caplog.records)
+
+
+def test_on_message_without_handler_is_noop(config, fake_client) -> None:
+    pub = Publisher(config, client=fake_client)
+    pub.connect()
+    fake_client.on_message(fake_client, None, _Msg("stormwatch/command/x", b"Off"))
+
+
+def test_on_message_bad_utf8_does_not_raise(config, fake_client) -> None:
+    pub = Publisher(config, client=fake_client)
+    calls: list[tuple[str, str]] = []
+    pub.set_command_handler(lambda key, payload: calls.append((key, payload)))
+    pub.connect()
+    fake_client.on_message(fake_client, None, _Msg("stormwatch/command/x", b"\xff\xfe"))
+    assert len(calls) == 1

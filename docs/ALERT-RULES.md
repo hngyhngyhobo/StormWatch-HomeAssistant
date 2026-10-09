@@ -6,9 +6,27 @@ that.
 For the related environment variables (`ALERTS_CRITICAL` / `ALERTS_HIGH` / `ALERTS_NORMAL`,
 `QUIET_HOURS`), see [CONFIGURATION.md](CONFIGURATION.md#common).
 
+## Precedence
+
+When more than one setting covers the same event, StormWatch uses the first of these:
+
+1. **Home Assistant dropdowns.** A level chosen in a `select.stormwatch_<event name>` dropdown is
+   saved in `/config/alert_levels.json` and wins for that event.
+2. **`/config/alerts.yaml` rules.** Used for every event without a dropdown choice.
+3. **`ALERTS_CRITICAL` / `ALERTS_HIGH` / `ALERTS_NORMAL`.** Fallback only, used when
+   `alerts.yaml` is missing or invalid.
+
+Use the dropdowns for everyday changes, such as making Flood Watch louder or turning off an event
+you do not want. Use `alerts.yaml` for advanced matching: regex, severity filters and quiet hours.
+An event set from a dropdown ignores quiet hours and the minimum severity setting.
+
+To hand an event back to `alerts.yaml`, remove its line from `alert_levels.json` and restart the
+container. See
+[Change alert levels from Home Assistant](HOME-ASSISTANT.md#change-alert-levels-from-home-assistant).
+
 ## How alert levels are controlled
 
-**`/config/alerts.yaml` is the real control.** StormWatch writes this file on first start if it is
+**`/config/alerts.yaml` is the rule file.** StormWatch writes this file on first start if it is
 missing. Once it loads, it replaces the environment-variable lists entirely. Edit it to change
 which events go to which level. Changes are hot-reloaded: the container checks the file every 30
 seconds, so no restart is needed.

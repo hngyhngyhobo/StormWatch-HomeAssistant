@@ -7,6 +7,8 @@ Topics (fixed, independent of DISCOVERY_PREFIX/DEVICE_NAME):
     stormwatch/attr/<key>         retained JSON attributes
     stormwatch/event/<name>       not retained, one-shot event payload
     stormwatch/availability       retained "online"/"offline", LWT-backed
+    stormwatch/command/<key>      inbound from Home Assistant (select entities);
+                                  subscribed as stormwatch/command/# on every connect
 
 Discovery configs are published under
     {discovery_prefix}/{component}/{slug}/{slug}_{key}/config
@@ -19,6 +21,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -35,6 +38,7 @@ AVAILABILITY_TOPIC = "stormwatch/availability"
 STATE_TOPIC_PREFIX = "stormwatch/state"
 ATTR_TOPIC_PREFIX = "stormwatch/attr"
 EVENT_TOPIC_PREFIX = "stormwatch/event"
+COMMAND_TOPIC_PREFIX = "stormwatch/command"
 
 _PAYLOAD_ONLINE = "online"
 _PAYLOAD_OFFLINE = "offline"
@@ -48,13 +52,15 @@ class EntitySpec:
 
     key: str
     name: str
-    component: str  # 'sensor' | 'binary_sensor'
+    component: str  # 'sensor' | 'binary_sensor' | 'select'
     device_class: str | None = None
     unit: str | None = None
     state_class: str | None = None
     icon: str | None = None
     entity_category: str | None = None
     value_is_json_attr: bool = False
+    options: tuple[str, ...] | None = None  # 'select' only
+    enabled_by_default: bool = True
 
 
 def _slugify(name: str) -> str:
@@ -84,6 +90,8 @@ class Publisher:
         self._entities: dict[str, EntitySpec] = {}
         self._entities_lock = threading.Lock()
         self._connected = False
+        self._command_handler: Callable[[str, str], None] | None = None
+        self._connected_callback: Callable[[], None] | None = None
         self.client = client if client is not None else self._build_client()
 
     @property
@@ -91,6 +99,15 @@ class Publisher:
         """True once the broker has accepted this session (on_connect,
         reason_code 0); False before connecting and after a disconnect."""
         return self._connected
+
+    def set_command_handler(self, fn: Callable[[str, str], None] | None) -> None:
+        """Register fn(key, payload) for messages on stormwatch/command/<key>."""
+        self._command_handler = fn
+
+    def set_connected_callback(self, fn: Callable[[], None] | None) -> None:
+        """Register fn() called after every successful (re)connect, once the
+        availability, discovery, and command subscription are in place."""
+        self._connected_callback = fn
 
     def _build_client(self) -> mqtt.Client:
         return mqtt.Client(
@@ -109,6 +126,7 @@ class Publisher:
         )
         self.client.on_connect = self._on_connect
         self.client.on_disconnect = self._on_disconnect
+        self.client.on_message = self._on_message
         self.client.connect(self.config.mqtt_host, self.config.mqtt_port, keepalive=60)
         self.client.loop_start()
 
@@ -127,6 +145,27 @@ class Publisher:
             entities = list(self._entities.values())
         for entity in entities:
             self._publish_entity_discovery(entity)
+        self.client.subscribe(f"{COMMAND_TOPIC_PREFIX}/#", qos=_PUBLISH_QOS)
+        callback = self._connected_callback
+        if callback is not None:
+            try:
+                callback()
+            except Exception:
+                logger.exception("connected callback failed")
+
+    def _on_message(self, client: Any, userdata: Any, message: Any) -> None:
+        """Dispatch an inbound command. Runs on paho's network thread, so
+        nothing may escape from here."""
+        try:
+            handler = self._command_handler
+            if handler is None:
+                return
+            topic = str(message.topic)
+            key = topic[len(COMMAND_TOPIC_PREFIX) + 1 :]
+            payload = bytes(message.payload).decode("utf-8", errors="replace").strip()
+            handler(key, payload)
+        except Exception:
+            logger.exception("error handling MQTT command message")
 
     def _on_disconnect(
         self,
@@ -186,6 +225,11 @@ class Publisher:
             payload["entity_category"] = entity.entity_category
         if entity.value_is_json_attr:
             payload["json_attributes_topic"] = f"{ATTR_TOPIC_PREFIX}/{entity.key}"
+        if entity.component == "select":
+            payload["command_topic"] = f"{COMMAND_TOPIC_PREFIX}/{entity.key}"
+            payload["options"] = list(entity.options or ())
+        if not entity.enabled_by_default:
+            payload["enabled_by_default"] = False
         return payload
 
     def publish_state(self, key: str, value: Any, attrs: dict | None = None) -> None:
