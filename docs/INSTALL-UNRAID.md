@@ -113,7 +113,8 @@ sections) also has a working default — full reference in [CONFIGURATION.md](CO
 StormWatch sorts every NWS alert into one of three levels:
 
 - **Critical ("WAKE ME UP")** — breaks through Do Not Disturb and the silent switch on your phone
-  (the iOS critical-alert push). Reserved for "must never be missed," e.g. a Tornado Warning.
+  (the iOS critical-alert push; on Android, the alarm stream after a one-time phone setup — see
+  [HOME-ASSISTANT.md](HOME-ASSISTANT.md#android)). Reserved for "must never be missed," e.g. a Tornado Warning.
 - **High ("Heads-up")** — pops up on screen with no sound by default. A blueprint option turns the
   sound on. Does not break Do Not Disturb.
 - **Normal ("Silent push")** — goes straight to the notification list. No pop-up, no sound.

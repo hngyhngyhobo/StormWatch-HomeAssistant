@@ -15,8 +15,12 @@ blueprint:
     - normal = Silent push (e.g. flood watch, freeze warning): goes
       straight to the notification list. No pop-up, no sound.
 
-    Which NWS alert gets which level is set in StormWatch's
-    /config/alerts.yaml (see docs/ALERT-RULES.md).
+    Works on iPhone and Android. On Android, WAKE ME UP rings on the alarm
+    stream (even on vibrate/silent); to break through Do Not Disturb and to
+    make Heads-up silent, see "Android" in docs/HOME-ASSISTANT.md.
+
+    Which NWS alert gets which level is set from the StormWatch device's
+    dropdowns in Home Assistant, or in /config/alerts.yaml.
   domain: automation
   source_url: https://github.com/hngyhngyhobo/StormWatch-HomeAssistant/blob/main/examples/blueprints/stormwatch_severe_alerts.yaml
   input:
@@ -79,11 +83,17 @@ action:
                     title: "{{ headline }}"
                     message: "{{ description }}"
                     data:
+                      # iPhone: critical alert (breaks Do Not Disturb + silent).
                       push:
                         sound:
                           name: "default"
                           critical: 1
                           volume: 1.0
+                      # Android: ring on the alarm stream, even on vibrate/silent.
+                      # Each phone ignores the other platform's keys.
+                      ttl: 0
+                      priority: high
+                      channel: alarm_stream
             default:
               # critical_enabled toggled off — send a normal push instead
               # of the DND-bypassing critical-alert payload.
@@ -95,6 +105,10 @@ action:
                 data:
                   push:
                     sound: "default"
+                  ttl: 0
+                  priority: high
+                  channel: StormWatch Alerts
+                  importance: high
 
       # high = Heads-up: pops up on screen, silent unless heads_up_sound
       # is on. Never bypasses Do Not Disturb.
@@ -112,6 +126,13 @@ action:
                 # "none" (the string) is how the HA push relay sends a
                 # notification with no sound. An empty/null value is rejected.
                 sound: "{{ 'default' if heads_up_sound else 'none' }}"
+              # Android: pops up on its own channel. Android decides the sound
+              # per channel; turn sound off for "StormWatch Heads-up" in the
+              # phone's notification settings for a silent pop-up.
+              ttl: 0
+              priority: high
+              channel: StormWatch Heads-up
+              importance: high
 
       # normal = Silent push: straight to the notification list, no pop-up,
       # no sound. An all-clear should never wake anyone up.
@@ -128,4 +149,7 @@ action:
               push:
                 sound: "none"
                 interruption-level: passive
+              # Android: low importance = no sound, no pop-up.
+              channel: StormWatch Silent
+              importance: low
     default: []

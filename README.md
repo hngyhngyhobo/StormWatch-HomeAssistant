@@ -20,7 +20,8 @@ wake you up, not arrive as a silent, Do-Not-Disturb-respecting notification.
 
 ## What it does
 
-- **NWS watches and warnings → Home Assistant entities and critical iOS alerts.** Warnings and
+- **NWS watches and warnings → Home Assistant entities and critical phone alerts (iPhone and
+  Android).** Warnings and
   watches are sorted into three levels by default (see "What reaches your phone" below). Change
   any level from a dropdown in Home Assistant, or in `/config/alerts.yaml` for advanced rules.
 - **Lightning proximity with a real all-clear timer** — swim status, nearest-strike distance/bearing,
@@ -65,6 +66,10 @@ severe-alerts blueprint, each level reaches your phone like this:
 | **Heads-up** (high) | Pops up on screen with no sound by default. A blueprint option turns the sound on. |
 | **Silent push** (normal) | Goes straight to the notification list. No pop-up, no sound. |
 | **Off** (ignore) | No push. |
+
+This works on iPhone and Android. **Android needs a five-minute, one-time phone setup** so WAKE ME
+UP can break through Do Not Disturb: see
+[docs/HOME-ASSISTANT.md#android](docs/HOME-ASSISTANT.md#android).
 
 You can change the level of any warning or watch from Home Assistant. Open the StormWatch device
 page and use the dropdowns on the Configuration card. The change takes effect immediately. See
