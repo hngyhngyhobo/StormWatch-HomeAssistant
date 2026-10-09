@@ -37,8 +37,9 @@ Quickest path — Unraid:
 
 1. Have an MQTT broker (Mosquitto) running and connected to Home Assistant — StormWatch publishes
    to it, it doesn't provide one.
-2. Unraid → **Docker → Add Container** → the **StormWatch** Community Applications template (or
-   paste the template URL — see [docs/INSTALL-UNRAID.md](docs/INSTALL-UNRAID.md)).
+2. StormWatch isn't in Community Applications yet. Download its template with one Unraid terminal
+   command, then **Docker → Add Container** → pick **StormWatch** in the Template dropdown — see
+   [docs/INSTALL-UNRAID.md](docs/INSTALL-UNRAID.md#install).
 3. Set the two required fields — `MQTT_HOST` and `NWS_CONTACT` — and your location
    (`LOCATION="Your City, ST"` or exact `LATITUDE`/`LONGITUDE`).
 4. **Apply.** The **StormWatch** device and its entities appear in Home Assistant automatically

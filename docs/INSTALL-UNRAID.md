@@ -19,30 +19,34 @@ up Home Assistant after the container is running, see [HOME-ASSISTANT.md](HOME-A
 
 ## Install
 
-StormWatch isn't yet published to the Community Applications feed, so install it by pointing
-Unraid at the template URL directly. Once it's on CA, this file will be updated with a "search
-Apps for StormWatch" shortcut — this is the pre-CA path.
+StormWatch isn't yet published to the Community Applications (CA) feed. Until it is, you save its
+template onto your Unraid server once, then pick it in the normal Add Container form. (The Add
+Container **Template** field is a dropdown of templates already on the server; it does not accept a
+URL.) Once StormWatch is on CA, this page will switch to a "search Apps for StormWatch" shortcut.
 
-1. In the Unraid webUI, go to the **Docker** tab.
-2. Click **Add Container** at the bottom of the page.
-3. At the top of the Add Container form, find the **Template** field. Paste in the template URL:
+1. In the Unraid webUI, open a terminal: click the **>_** (Terminal) icon at the top right.
+2. Paste this command and press Enter. It saves the StormWatch template where Unraid keeps user
+   templates:
 
    ```
-   https://raw.githubusercontent.com/hngyhngyhobo/StormWatch-HomeAssistant/main/unraid/stormwatch.xml
+   wget -O /boot/config/plugins/dockerMan/templates-user/my-StormWatch.xml https://raw.githubusercontent.com/hngyhngyhobo/StormWatch-HomeAssistant/main/unraid/stormwatch.xml
    ```
 
-   Unraid fetches the XML and pre-fills the rest of the form — repository, icon, category, ports,
-   and every configuration field below.
+   Then close the terminal.
+3. Go to the **Docker** tab and click **Add Container** at the bottom of the page.
+4. In the **Template** dropdown at the top of the form, pick **StormWatch** under
+   **[ User templates ]**. Unraid pre-fills the rest of the form — repository, ports, and every
+   configuration field below. (The container shows a generic icon for now; that is cosmetic.)
 
-   <!-- screenshot: Add Container form with the Template URL field filled in -->
+   <!-- screenshot: Add Container form with the StormWatch template selected -->
 
-4. Confirm the **Repository** field reads `ghcr.io/hngyhngyhobo/stormwatch:latest` (pin a version
+5. Confirm the **Repository** field reads `ghcr.io/hngyhngyhobo/stormwatch:latest` (pin a version
    tag instead of `:latest` if you prefer — see [Updates](#updates) below).
-5. Fill in the two required fields (walkthrough below). Optionally also set **Location** (or
+6. Fill in the two required fields (walkthrough below). Optionally also set **Location** (or
    **Latitude**/**Longitude**) for your own area — see the note below the table.
-6. Leave everything else at its default unless you know you need to change it — the container is
+7. Leave everything else at its default unless you know you need to change it — the container is
    fully functional out of the box once the two required fields are set.
-7. Click **Apply**.
+8. Click **Apply**.
 
    <!-- screenshot: completed Add Container form before clicking Apply -->
 
