@@ -35,8 +35,8 @@ URL.) Once StormWatch is on CA, this page will switch to a "search Apps for Stor
    Then close the terminal.
 3. Go to the **Docker** tab and click **Add Container** at the bottom of the page.
 4. In the **Template** dropdown at the top of the form, pick **StormWatch** under
-   **[ User templates ]**. Unraid pre-fills the rest of the form — repository, ports, and every
-   configuration field below. (The container shows a generic icon for now; that is cosmetic.)
+   **[ User templates ]**. Unraid pre-fills the rest of the form — repository, icon, ports, and
+   every configuration field below.
 
    <!-- screenshot: Add Container form with the StormWatch template selected -->
 
