@@ -35,6 +35,7 @@ from stormwatch.__main__ import (
 )
 from stormwatch.config import Config, ConfigError
 from stormwatch.health import start_health_server
+from stormwatch.levels import ALERT_LEVEL_EVENTS, LEVEL_OPTIONS, MARINE_ONLY_EVENTS, level_key
 from stormwatch.rules import AlertTracker, RuleEngine
 
 _FIXTURE_PATH = Path(__file__).parent / "fixtures" / "nws_alerts_active.json"
@@ -84,6 +85,8 @@ class FakePublisher:
         self.discovery: list[object] = []
         self.connect_calls = 0
         self.offline_calls = 0
+        self.command_handler = None
+        self.connected_callback = None
 
     def publish_discovery(self, entities) -> None:
         self.discovery.extend(entities)
@@ -93,6 +96,12 @@ class FakePublisher:
 
     def publish_event(self, name, payload) -> None:
         self.events.append((name, payload))
+
+    def set_command_handler(self, fn) -> None:
+        self.command_handler = fn
+
+    def set_connected_callback(self, fn) -> None:
+        self.connected_callback = fn
 
     def connect(self) -> None:
         self.connect_calls += 1
@@ -655,7 +664,7 @@ def test_start_logs_exact_startup_lines_and_registers_discovery(
     # Discovery also always includes the always-on entity set (Fix 2:
     # binary_sensor.stormwatch_connected -- never gated, see _ALWAYS_ENTITIES
     # in stormwatch.__main__), on top of the NWS set registered here.
-    assert len(publisher.discovery) == len(_ENTITIES) + len(_ALWAYS_ENTITIES)
+    assert len(publisher.discovery) == len(_ENTITIES) + len(_ALWAYS_ENTITIES) + 66
     assert fake_health.stopped is True
 
 
@@ -999,3 +1008,126 @@ def test_health_server_reflects_status_provider_changes_across_requests() -> Non
         assert second["state"]["active_alerts"] == 3
     finally:
         server.stop()
+
+
+# --- HA-adjustable alert levels ------------------------------------------------
+
+
+def _level_supervisor(tmp_path: Path, **config_overrides: object) -> Supervisor:
+    supervisor = _fake_supervisor(tmp_path, **config_overrides)
+    supervisor.levels.load()
+    supervisor.engine.overrides = supervisor.levels
+    return supervisor
+
+
+def test_entity_specs_adds_66_level_selects_when_nws_active() -> None:
+    from stormwatch.__main__ import _entity_specs
+
+    specs = [e for e in _entity_specs(_config(), False, True, False) if e.component == "select"]
+    assert len(specs) == 66
+    by_key = {e.key: e for e in specs}
+    tw = by_key["alert_level_tornado_warning"]
+    assert tw.name == "Tornado Warning"
+    assert tw.options == LEVEL_OPTIONS
+    assert tw.entity_category == "config"
+    assert tw.enabled_by_default is True
+    for event in ALERT_LEVEL_EVENTS:
+        assert by_key[level_key(event)].enabled_by_default == (event not in MARINE_ONLY_EVENTS)
+
+
+def test_entity_specs_has_no_level_selects_when_nws_disabled() -> None:
+    from stormwatch.__main__ import _entity_specs
+
+    specs = _entity_specs(_config(nws_enabled=False), False, False, False)
+    assert [e for e in specs if e.component == "select"] == []
+
+
+def test_start_registers_command_wiring_and_loads_overrides(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "stormwatch.__main__.start_health_server",
+        lambda status_provider, port=8099: _FakeHealthServer(),
+    )
+    (tmp_path / "alert_levels.json").write_text(
+        json.dumps({"version": 1, "levels": {"Tornado Watch": "ignore"}}), encoding="utf-8"
+    )
+    supervisor = _fake_supervisor(tmp_path)
+    supervisor.start()
+    supervisor.stop()
+
+    publisher = supervisor.publisher
+    assert publisher.command_handler is not None
+    assert publisher.connected_callback is not None
+    assert supervisor.engine.overrides is supervisor.levels
+    assert supervisor.levels.get("Tornado Watch") == "ignore"
+
+
+def test_start_does_not_register_command_wiring_when_nws_disabled(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        "stormwatch.__main__.start_health_server",
+        lambda status_provider, port=8099: _FakeHealthServer(),
+    )
+    supervisor = _fake_supervisor(tmp_path, nws_enabled=False, nws_contact="")
+    supervisor.start()
+    supervisor.stop()
+    assert supervisor.publisher.command_handler is None
+    assert supervisor.publisher.connected_callback is None
+
+
+def test_publish_alert_levels_publishes_effective_level_for_all_events(tmp_path: Path) -> None:
+    supervisor = _level_supervisor(tmp_path)
+    supervisor._publish_alert_levels()
+
+    states = supervisor.publisher.state_by_key()
+    assert len(states) == 66
+    # Test config lists: Tornado Warning is critical, Tornado Watch normal,
+    # High Wind Warning is unmatched -> Off.
+    assert states["alert_level_tornado_warning"][0] == "WAKE ME UP"
+    assert states["alert_level_tornado_watch"][0] == "Silent push"
+    assert states["alert_level_high_wind_warning"][0] == "Off"
+
+
+def test_command_off_stores_override_and_publishes_state(tmp_path: Path) -> None:
+    supervisor = _level_supervisor(tmp_path)
+    supervisor._handle_command("alert_level_tornado_watch", "Off")
+
+    assert supervisor.levels.get("Tornado Watch") == "ignore"
+    saved = json.loads((tmp_path / "alert_levels.json").read_text(encoding="utf-8"))
+    assert saved["levels"] == {"Tornado Watch": "ignore"}
+    assert supervisor.publisher.states[-1][:2] == ("alert_level_tornado_watch", "Off")
+    assert supervisor.engine.evaluate({"properties": {"event": "Tornado Watch"}}) is None
+
+
+def test_command_invalid_option_republishes_current_state(tmp_path: Path, caplog) -> None:
+    supervisor = _level_supervisor(tmp_path)
+    with caplog.at_level(logging.WARNING):
+        supervisor._handle_command("alert_level_tornado_warning", "Loud")
+
+    assert supervisor.levels.get("Tornado Warning") is None
+    assert supervisor.publisher.states == [("alert_level_tornado_warning", "WAKE ME UP", None)]
+    assert any(r.levelno == logging.WARNING for r in caplog.records)
+
+
+def test_command_unknown_key_is_ignored(tmp_path: Path, caplog) -> None:
+    supervisor = _level_supervisor(tmp_path)
+    with caplog.at_level(logging.WARNING):
+        supervisor._handle_command("alert_level_made_up", "Off")
+    assert supervisor.publisher.states == []
+    assert any(r.levelno == logging.WARNING for r in caplog.records)
+
+
+def test_reload_rules_republishes_levels_only_on_successful_load(tmp_path: Path) -> None:
+    rules_path = tmp_path / "alerts.yaml"
+    rules_path.write_text("version: 1\nrules: []\n", encoding="utf-8")
+    supervisor = _level_supervisor(tmp_path)
+
+    supervisor._reload_rules_if_changed()
+    assert len(supervisor.publisher.states) == 66
+
+    supervisor.publisher.states.clear()
+    rules_path.write_text("this: is: not: valid: [", encoding="utf-8")
+    os.utime(rules_path, (supervisor._rules_mtime + 5, supervisor._rules_mtime + 5))
+    supervisor._reload_rules_if_changed()
+    assert supervisor.engine.last_error is not None
+    assert supervisor.publisher.states == []

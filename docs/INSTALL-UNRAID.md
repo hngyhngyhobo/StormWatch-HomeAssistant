@@ -122,11 +122,19 @@ StormWatch's job is only to classify each alert and publish it. What actually re
 decided by the Home Assistant automation you set up (the severe-alerts blueprint covered in
 [HOME-ASSISTANT.md](HOME-ASSISTANT.md) is the easiest way).
 
-The default levels are ready to use. On first start, StormWatch writes `/config/alerts.yaml`
-(on Unraid: `/mnt/user/appdata/stormwatch/alerts.yaml`) with the default lists. **To change which
-events go to which level, edit that file.** It hot-reloads within 30 seconds, so no restart or
-Apply is needed. The full default lists and how to edit them are in
-**[ALERT-RULES.md](ALERT-RULES.md)**.
+The default levels are ready to use.
+
+**The easy way to change a level is in Home Assistant.** Open Settings -> Devices & services ->
+MQTT -> the StormWatch device. The Configuration card has one dropdown per NWS warning and watch:
+WAKE ME UP, Heads-up, Silent push or Off. A change takes effect immediately and is saved across
+restarts and updates. See
+[Change alert levels from Home Assistant](HOME-ASSISTANT.md#change-alert-levels-from-home-assistant).
+
+**The advanced way is `alerts.yaml`.** On first start, StormWatch writes `/config/alerts.yaml`
+(on Unraid: `/mnt/user/appdata/stormwatch/alerts.yaml`) with the default lists. Use it for regex
+matching, severity filters and quiet hours. It hot-reloads within 30 seconds, so no restart or
+Apply is needed. A dropdown choice wins over `alerts.yaml` for that event. The full default lists
+and how to edit them are in **[ALERT-RULES.md](ALERT-RULES.md)**.
 
 The template also has three fields named **Alerts Critical**, **Alerts High** and **Alerts
 Normal**. They are advanced fallback fields. They are used only if `/config/alerts.yaml` is

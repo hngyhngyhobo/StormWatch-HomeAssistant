@@ -63,6 +63,7 @@ Xweather call tracking — is **planned for Phase 4 (Xweather)** and does not ex
 | `binary_sensor.stormwatch_watering_needed` | binary | On when watering is warranted: under 0.1 in in the last 24h **and** under 0.1 in forecast over the next 48h **and** under 0.5 in over the last 7 days. Off whenever any of those inputs is unavailable — it never asserts a need from incomplete data. Build watering automations on this flag. |
 | `binary_sensor.stormwatch_rain_available` | binary (`connectivity`, diagnostic) | On when the NWS rainfall data source is reachable |
 | `sensor.stormwatch_lightning_strikes` | count | Count of recent lightning strikes (last `STRIKE_MAP_WINDOW_MINUTES`); a GeoJSON `FeatureCollection` of strike points (distance/bearing/age/range per point) is in the `geojson` attribute — see [Lightning strike map](#lightning-strike-map) below |
+| `select.stormwatch_<event name>` | select (config) | One dropdown per NWS warning and watch (66 in all), for example `select.stormwatch_tornado_warning`. Options: WAKE ME UP / Heads-up / Silent push / Off. Only present when `NWS_ENABLED` is true. See [Change alert levels from Home Assistant](#change-alert-levels-from-home-assistant). |
 
 The lightning/pool entities (rows 7-13, plus `sensor.stormwatch_lightning_strikes`) only appear when `BLITZORTUNG_ENABLED` is true (the
 default), and the rainfall entities (last five rows) only appear when `RAIN_ENABLED` is true (also
@@ -102,8 +103,9 @@ The repo ships an importable blueprint that wires `sensor` state into real notif
 
 ### What each level does on your phone
 
-StormWatch sorts alerts into three levels (which events go in which level is set in
-`/config/alerts.yaml`; see [ALERT-RULES.md](ALERT-RULES.md)). The severe-alerts blueprint delivers
+StormWatch sorts alerts into three levels. Which events go in which level is set from the Home
+Assistant dropdowns ([see below](#change-alert-levels-from-home-assistant)) or in
+`/config/alerts.yaml` (see [ALERT-RULES.md](ALERT-RULES.md)). The severe-alerts blueprint delivers
 them like this:
 
 | Level | Name | What your phone does |
@@ -112,6 +114,40 @@ them like this:
 | `high` | Heads-up | Pops up on screen with **no sound** by default. Turn on **Heads-up alerts make a sound** (`heads_up_sound`, off by default) to play the default notification sound. Never breaks through Do Not Disturb either way. |
 | `normal` | Silent push | Goes straight to the notification list. No pop-up, no sound (iOS `interruption-level: passive` and `sound: none`). |
 | `ignore` | Off | No push. |
+
+### Change alert levels from Home Assistant
+
+You can change the level of any NWS warning or watch without editing a file.
+
+1. In Home Assistant, go to Settings -> Devices & services -> MQTT and open the **StormWatch**
+   device.
+2. The **Configuration** card lists one dropdown per NWS warning and watch.
+3. Pick a level: **WAKE ME UP**, **Heads-up**, **Silent push** or **Off**.
+
+The entity ids follow the event name in snake_case: `select.stormwatch_<event name>`. For example,
+`select.stormwatch_tornado_warning` and `select.stormwatch_high_wind_warning`. You can put any of
+them on a dashboard. [examples/dashboard.yaml](../examples/dashboard.yaml) has an "Alert levels"
+card with the common ones.
+
+How it behaves:
+
+- **Takes effect immediately.** No restart. StormWatch saves your choices in
+  `/config/alert_levels.json`, so they survive restarts and updates.
+- **A dropdown choice wins over `/config/alerts.yaml`** for that event. Events you never touch keep
+  following `alerts.yaml`. An event you set from a dropdown ignores quiet hours and the minimum
+  severity setting.
+- **To hand an event back to `alerts.yaml`,** remove its entry from the `levels` section of
+  `alert_levels.json` (for example `"Tornado Watch": "high",`) and restart the container. To reset every event, delete the file and restart the container.
+- **Raising the level of an alert that is active right now sends it again** at the new level.
+  Setting an active alert to **Off** removes it.
+- **Marine-only types are hidden by default.** Gale, Storm, Hazardous Seas, Special Marine, Heavy
+  Freezing Spray and Hurricane Force Wind alerts are never issued for a land location, so their
+  dropdowns are disabled. If you live on the water, enable them in the entity settings.
+- **Who gets notified, and whether Heads-up makes a sound,** is still set in the blueprint or your
+  automation. The dropdowns only change the level.
+
+See [ALERT-RULES.md](ALERT-RULES.md#precedence) for how the dropdowns, `alerts.yaml` and the
+`ALERTS_*` variables fit together.
 
 ### If silent or heads-up alerts never arrive
 

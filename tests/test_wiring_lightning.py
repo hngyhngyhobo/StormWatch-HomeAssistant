@@ -29,6 +29,7 @@ from stormwatch.__main__ import (
     _ENTITIES,
     LightningWiring,
     Supervisor,
+    _alert_level_entities,
     _entity_specs,
     _lightning_entities,
     _make_blitzortung_client,
@@ -70,6 +71,12 @@ class FakePublisher:
 
     def publish_state(self, key, value, attrs=None) -> None:
         self.states.append((key, value, attrs))
+
+    def set_command_handler(self, fn) -> None:
+        pass
+
+    def set_connected_callback(self, fn) -> None:
+        pass
 
     def publish_event(self, name, payload) -> None:
         self.events.append((name, payload))
@@ -600,11 +607,11 @@ def test_entity_specs_includes_lightning_only_when_active() -> None:
     config = _config()
     assert {e.key for e in _entity_specs(config, lightning_active=False)} == {
         e.key for e in _ENTITIES
-    } | {e.key for e in _ALWAYS_ENTITIES}
+    } | {e.key for e in _ALWAYS_ENTITIES} | {e.key for e in _alert_level_entities()}
     with_lightning = {e.key for e in _entity_specs(config, lightning_active=True)}
     assert with_lightning == {e.key for e in _ENTITIES} | {e.key for e in _ALWAYS_ENTITIES} | {
-        e.key for e in _lightning_entities(config)
-    }
+        e.key for e in _alert_level_entities()
+    } | {e.key for e in _lightning_entities(config)}
 
 
 def test_entity_specs_excludes_nws_entities_when_nws_inactive() -> None:
@@ -653,8 +660,8 @@ def test_supervisor_start_registers_lightning_entities_when_active(
 
     discovered_keys = {e.key for e in publisher.discovery}
     assert discovered_keys == {e.key for e in _ENTITIES} | {e.key for e in _ALWAYS_ENTITIES} | {
-        e.key for e in _lightning_entities(config)
-    }
+        e.key for e in _alert_level_entities()
+    } | {e.key for e in _lightning_entities(config)}
 
 
 def test_supervisor_start_logs_exact_blitzortung_startup_line(
@@ -784,7 +791,11 @@ def test_disabled_mode_publishes_no_lightning_entities_or_log_line(
     supervisor.stop()
 
     discovered_keys = {e.key for e in publisher.discovery}
-    assert discovered_keys == {e.key for e in _ENTITIES} | {e.key for e in _ALWAYS_ENTITIES}
+    assert discovered_keys == (
+        {e.key for e in _ENTITIES}
+        | {e.key for e in _ALWAYS_ENTITIES}
+        | {e.key for e in _alert_level_entities()}
+    )
     assert not any("Blitzortung client started" in r.getMessage() for r in caplog.records)
     status = supervisor._status()
     assert "lightning" not in status["sources"]

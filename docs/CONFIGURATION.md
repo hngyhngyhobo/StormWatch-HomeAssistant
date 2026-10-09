@@ -17,10 +17,16 @@ StormWatch has two layers of configuration, and most people only ever need the f
   defaults on first start if it is missing, and it hot-reloads on change (within 30 seconds, no
   restart needed). See [ALERT-RULES.md](ALERT-RULES.md).
 
+- **`/config/alert_levels.json`** — the alert levels you chose from the Home Assistant dropdowns
+  (one entry per event you changed). StormWatch writes it; you do not need to edit it. A dropdown
+  choice wins over `alerts.yaml` for that event. Remove a line, or delete the file, and restart the
+  container to hand events back to `alerts.yaml`. See
+  [HOME-ASSISTANT.md](HOME-ASSISTANT.md#change-alert-levels-from-home-assistant).
+
 The env-var alert lists (`ALERTS_CRITICAL` / `ALERTS_HIGH` / `ALERTS_NORMAL`, below) are a fallback
 only. They are used when `/config/alerts.yaml` is missing or fails validation. Once `alerts.yaml`
 loads, it replaces them entirely, so changing them on a working install does nothing. To change
-alert levels, edit `/config/alerts.yaml`.
+alert levels, use the Home Assistant dropdowns or edit `/config/alerts.yaml`.
 
 ## Required
 
@@ -122,7 +128,7 @@ will do and the cost math behind the defaults below.
 | `NWS_ENABLED` | `true` | Non-US users turn this off |
 | `NWS_POLL_SECONDS` | `60` | Floor of 30 enforced |
 | `NWS_API_BASE` | `https://api.weather.gov` | Testing/override; rarely changed. NWS API base URL. |
-| `CONFIG_DIR` | `/config` | Path to persistent storage for alert rules, state, and the cached geocoded location (`location.json`) |
+| `CONFIG_DIR` | `/config` | Path to persistent storage for alert rules, alert level choices (`alert_levels.json`), state, and the cached geocoded location (`location.json`) |
 | `RAIN_ENABLED` | `true` | Set `false` to disable the rainfall feature entirely — no entities, no polling, `/healthz` omits the `rain` source. US locations only (NWS data); non-US users should leave it off. |
 | `RAIN_FORECAST_POLL_SECONDS` | `3600` | Seconds between rainfall forecast updates (`sensor.stormwatch_rain_forecast_today` / `_rain_forecast_48h`) |
 | `RAIN_OBS_POLL_SECONDS` | `900` | Seconds between observed-rainfall updates (`sensor.stormwatch_rain_last_24h` / `_rain_last_7d`) |

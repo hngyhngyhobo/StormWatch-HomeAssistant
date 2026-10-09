@@ -29,6 +29,7 @@ from stormwatch.__main__ import (
     _ENTITIES,
     RainWiring,
     Supervisor,
+    _alert_level_entities,
     _entity_specs,
     _format_rain_mm,
     _rain_entities,
@@ -63,6 +64,12 @@ class FakePublisher:
 
     def publish_state(self, key, value, attrs=None) -> None:
         self.states.append((key, value, attrs))
+
+    def set_command_handler(self, fn) -> None:
+        pass
+
+    def set_connected_callback(self, fn) -> None:
+        pass
 
     def publish_event(self, name, payload) -> None:
         pass
@@ -402,11 +409,11 @@ def test_entity_specs_includes_rain_only_when_active() -> None:
     config = _config()
     assert {e.key for e in _entity_specs(config, lightning_active=False)} == {
         e.key for e in _ENTITIES
-    } | {e.key for e in _ALWAYS_ENTITIES}
+    } | {e.key for e in _ALWAYS_ENTITIES} | {e.key for e in _alert_level_entities()}
     with_rain = {e.key for e in _entity_specs(config, lightning_active=False, rain_active=True)}
     assert with_rain == {e.key for e in _ENTITIES} | {e.key for e in _ALWAYS_ENTITIES} | {
-        e.key for e in _rain_entities(config)
-    }
+        e.key for e in _alert_level_entities()
+    } | {e.key for e in _rain_entities(config)}
 
 
 # --- Supervisor: registration + startup log lines --------------------------------
@@ -431,8 +438,8 @@ def test_supervisor_start_registers_rain_entities_when_active(tmp_path: Path, mo
 
     discovered_keys = {e.key for e in publisher.discovery}
     assert discovered_keys == {e.key for e in _ENTITIES} | {e.key for e in _ALWAYS_ENTITIES} | {
-        e.key for e in _rain_entities(supervisor.config)
-    }
+        e.key for e in _alert_level_entities()
+    } | {e.key for e in _rain_entities(supervisor.config)}
 
 
 def test_supervisor_start_logs_exact_rain_tracking_started_line(
@@ -527,7 +534,11 @@ def test_disabled_mode_publishes_no_rain_entities_or_thread_or_healthz(
     supervisor.stop()
 
     discovered_keys = {e.key for e in publisher.discovery}
-    assert discovered_keys == {e.key for e in _ENTITIES} | {e.key for e in _ALWAYS_ENTITIES}
+    assert discovered_keys == (
+        {e.key for e in _ENTITIES}
+        | {e.key for e in _ALWAYS_ENTITIES}
+        | {e.key for e in _alert_level_entities()}
+    )
     assert "stormwatch-rain" not in thread_names
     status = supervisor._status()
     assert "rain" not in status["sources"]

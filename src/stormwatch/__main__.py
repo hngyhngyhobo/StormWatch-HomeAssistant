@@ -27,6 +27,15 @@ from stormwatch import __version__
 from stormwatch.config import Config, ConfigError, load_config
 from stormwatch.geo import bearing_to_compass, cells_for_radius
 from stormwatch.health import HealthServer, start_health_server
+from stormwatch.levels import (
+    ALERT_LEVEL_EVENTS,
+    LABEL_TO_PRIORITY,
+    LEVEL_OPTIONS,
+    MARINE_ONLY_EVENTS,
+    PRIORITY_TO_LABEL,
+    LevelOverrides,
+    level_key,
+)
 from stormwatch.location import resolve_location
 from stormwatch.publisher import EntitySpec, Publisher
 from stormwatch.rules import AlertTracker, RuleEngine, priority_rank
@@ -247,6 +256,22 @@ def _rain_entities(config: Config) -> tuple[EntitySpec, ...]:
     )
 
 
+def _alert_level_entities() -> tuple[EntitySpec, ...]:
+    """One Home Assistant select per NWS event whose alert level is adjustable."""
+    return tuple(
+        EntitySpec(
+            key=level_key(event),
+            name=event,
+            component="select",
+            icon="mdi:bell-cog",
+            entity_category="config",
+            options=LEVEL_OPTIONS,
+            enabled_by_default=event not in MARINE_ONLY_EVENTS,
+        )
+        for event in ALERT_LEVEL_EVENTS
+    )
+
+
 def _entity_specs(
     config: Config, lightning_active: bool, nws_active: bool = True, rain_active: bool = False
 ) -> list[EntitySpec]:
@@ -262,6 +287,7 @@ def _entity_specs(
     specs: list[EntitySpec] = list(_ALWAYS_ENTITIES)
     if nws_active:
         specs.extend(_ENTITIES)
+        specs.extend(_alert_level_entities())
     if lightning_active:
         specs.extend(_lightning_entities(config))
     if rain_active:
@@ -862,6 +888,8 @@ class Supervisor:
         self._health: HealthServer | None = None
         self._rules_path = os.path.join(config.config_dir, _ALERTS_YAML_FILENAME)
         self._rules_mtime: float | None = None
+        self.levels = LevelOverrides(os.path.join(config.config_dir, "alert_levels.json"))
+        self._level_events = {level_key(event): event for event in ALERT_LEVEL_EVENTS}
         self._active_alerts_count = 0
         self._mqtt_backoff = _RECONNECT_INITIAL_SECONDS
         self._mqtt_was_connected = False
@@ -944,7 +972,13 @@ class Supervisor:
         logger.info("StormWatch %s starting", __version__)
 
         self._ensure_alerts_yaml()
+        self.levels.load()
+        self.engine.overrides = self.levels
         self._reload_rules_if_changed()
+
+        if self._nws_active:
+            self.publisher.set_command_handler(self._handle_command)
+            self.publisher.set_connected_callback(self._publish_alert_levels)
 
         self.publisher.publish_discovery(
             _entity_specs(self.config, self._lightning_active, self._nws_active, self._rain_active)
@@ -1011,8 +1045,43 @@ class Supervisor:
         except OSError:
             return
         if mtime != self._rules_mtime:
-            self.engine.load(self._rules_path)
+            loaded = self.engine.load(self._rules_path)
             self._rules_mtime = mtime
+            if loaded and self._nws_active:
+                # Effective levels can change when alerts.yaml changes.
+                self._publish_alert_levels()
+
+    def _publish_alert_levels(self) -> None:
+        """Publish the effective level of every adjustable event (retained)."""
+        for event in ALERT_LEVEL_EVENTS:
+            self._publish_alert_level(event)
+
+    def _publish_alert_level(self, event: str) -> None:
+        try:
+            label = PRIORITY_TO_LABEL[self.engine.effective_level(event)]
+            self.publisher.publish_state(level_key(event), label)
+        except Exception:
+            logger.exception("could not publish alert level for %s", event)
+
+    def _handle_command(self, key: str, payload: str) -> None:
+        """Apply a level chosen in Home Assistant (runs on paho's thread)."""
+        event = self._level_events.get(key)
+        if event is None:
+            logger.warning("Ignoring command for unknown alert level key %r", key)
+            return
+        priority = LABEL_TO_PRIORITY.get(payload)
+        if priority is None:
+            logger.warning("Ignoring invalid alert level %r for %s", payload, event)
+            self._publish_alert_level(event)
+            return
+        try:
+            self.levels.set(event, priority)
+        except Exception:
+            logger.exception("could not save alert level for %s", event)
+            self._publish_alert_level(event)
+            return
+        logger.info("Alert level for %s set to %s from Home Assistant", event, payload)
+        self._publish_alert_level(event)
 
     def _start_thread(self, target, name: str) -> None:
         thread = threading.Thread(target=target, name=name, daemon=True)
