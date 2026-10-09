@@ -48,6 +48,9 @@ Quickest path — Unraid:
    notifications: [severe alerts](examples/blueprints/stormwatch_severe_alerts.yaml),
    [pool alerts](examples/blueprints/stormwatch_pool_alerts.yaml),
    [tornado strobe](examples/blueprints/stormwatch_tornado_strobe.yaml).
+6. Add the StormWatch dashboard: paste [examples/dashboard.yaml](examples/dashboard.yaml) into a new
+   dashboard's raw configuration editor — see
+   [docs/HOME-ASSISTANT.md](docs/HOME-ASSISTANT.md#stormwatch-dashboard).
 
 Full step-by-step guides: **[Unraid](docs/INSTALL-UNRAID.md)** · **[Docker / Compose](docs/INSTALL-DOCKER.md)**.
 

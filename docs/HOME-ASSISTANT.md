@@ -126,8 +126,8 @@ You can change the level of any NWS warning or watch without editing a file.
 
 The entity ids follow the event name in snake_case: `select.stormwatch_<event name>`. For example,
 `select.stormwatch_tornado_warning` and `select.stormwatch_high_wind_warning`. You can put any of
-them on a dashboard. [examples/dashboard.yaml](../examples/dashboard.yaml) has an "Alert levels"
-card with the common ones.
+them on a dashboard. The [StormWatch dashboard](#stormwatch-dashboard) has an "Alert Levels" card
+with the common ones.
 
 How it behaves:
 
@@ -230,6 +230,27 @@ Prefer editing YAML directly? The same automation is in
 [examples/automations.yaml](../examples/automations.yaml) as `stormwatch_tornado_strobe` — replace
 the `light.smart_lamp_1` placeholder with your lamp's real entity ID (find it under Developer Tools
 → States).
+
+## StormWatch dashboard
+
+[examples/dashboard.yaml](../examples/dashboard.yaml) is a complete dashboard: weather alerts, a
+critical-alert banner, the alert-level dropdowns, pool/lightning, watering, rain, and source health.
+It gets its own entry in the sidebar. Installing it takes about two minutes and needs no file
+editing:
+
+1. Settings → Dashboards → **+ Add dashboard** → **New dashboard from scratch**. Title
+   **StormWatch**, icon `mdi:weather-lightning`, **Show in sidebar** on → **Create**.
+2. Open the new dashboard → pencil icon (**Edit dashboard**) → three-dot menu →
+   **Raw configuration editor**.
+3. Delete everything in the editor, paste in the whole of
+   [examples/dashboard.yaml](../examples/dashboard.yaml), then **Save** → **Done**.
+
+The **Alert Levels** card shows the common warnings and watches. Its last row opens the MQTT
+integration; pick the StormWatch device to see all 66 dropdowns. If you turned a feature off (for
+example `BLITZORTUNG_ENABLED=false`), its rows show as unavailable; delete those cards in the editor.
+
+The dashboard stays editable in the normal UI afterwards. The lightning strike map is not included
+because it needs a community card; see below.
 
 ## Lightning strike map
 
